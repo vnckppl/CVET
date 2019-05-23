@@ -6,11 +6,6 @@
 # Initialize FSL
 source /usr/share/fsl/5.0/etc/fslconf/fsl.sh
 
-# Path
-sDIR=${sDIR}
-aDIR=/home/Software/Anima-Binaries-2.2
-export PATH=${PATH}:${sDIR}:${aDIR}
-
 
 # Environment
 SUB="subject_string"
@@ -39,6 +34,11 @@ ${oDIR}/ss_${SUB}_BrainExtractionMask.nii.gz \
 -dilM -dilM \
 ${oDIR}/ss_${SUB}_BrainExtractionMask_dilM2.nii.gz
 
+# ITK is very sensitive with any deviations between
+# sform / qform codes. Decimal changes that occur
+# will result in problems with the bias field correction.
+# We are therefore going to copy over the affine matrix
+# to avoid this.
 fslcpgeom \
 ${iDIR}/memprage.nii \
 ${oDIR}/ss_${SUB}_BrainExtractionMask.nii.gz
