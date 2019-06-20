@@ -1,5 +1,52 @@
 #!/bin/bash
 
+# This script outputs cerebellar volumes from T1-weighted images.
+# The input is a BIDS data folder of a single subject.
+# Data can be cross-sectional (1 time point) or longitudinal
+# (2 or more time points).
+
+# The pipeline is a multi step approach:
+# 1) T1 bias field correction using N4
+
+# Environment
+inputFolder="${$1}"
+scriptsDir=$(echo "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"/Scripts)
+
+
+# Test if this at least looks like bids data
+prefix="$(basename ${inputFolder} | cut -c 1-4)"
+sDirName=$(dirname "${inputFolder}" | awk -F/ '{ print $NF }')
+if [ ! "${prefix}" = "sub-" ] || [ ! "${sDirName}" = "sourcedata" ]; then
+    echo "ERROR: The folder you entered as input folder does not seem to be a BIDS data folder. Exit"
+    exit 1
+fi
+
+# Test if there is already a derivatives folder
+dDirName=$(echo $(dirname $(dirname ${inputFolder}))/derivatives)
+if [ ! -d ${dDirName} ]; then
+    
+    echo "No derivatives folder found. Creating derivatives folder"
+    mkdir ${dDirName}
+
+fi
+
+# Run scripts
+
+
+
+
+
+
+
+
+
+
+
+
+
+# This script takes in a BIDS data folder of a single subject
+# with one or more time points and uses only the T1 to 
+
 # This script performas N4 bias field correction
 # within a brain mask.
 
