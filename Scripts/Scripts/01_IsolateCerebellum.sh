@@ -1,12 +1,14 @@
 #!/bin/bash
 
-# This script performas N4 bias field correction
-# within a brain mask.
-
-# Initialize FSL
-source /usr/local/fsl/bin/fsl
+# This script performas N4 bias field correction within a brain mask.
 
 # Environment
+iDIR=/input/sub-${SID}
+oDIR=/output/derivatives
+
+
+
+
 lhab_data="/home/vkoppe-utah/lhab_data/LHAB/LHAB_v1.1.1"
 iDIR="${lhab_data}/sourcedata"
 oDIR="${lhab_data}/derivatives/CerebSUIT_20190617"
@@ -17,7 +19,7 @@ mkdir -p ${oDIR}
 for SUB in $(ls ${iDIR}); do
 
     # Create Script for N4 bias field correction
-    cat <<-EOF > 
+
 	#!/bin/bash
 
 	# This script creates a skull stripped brain
@@ -84,7 +86,7 @@ for SUB in $(ls ${iDIR}); do
 	# Exit
 	exit
 
- eof
+
 done
 
 	
