@@ -48,45 +48,45 @@ SESL=( ${SESL} )
 SESN=${#SESL[@]}
 
 
-# Run scripts
-# 01 T1 Bias Field Correction
-# Loop over sessions
-for SES in ${SESL[@]}; do
+# # Run scripts
+# # 01 T1 Bias Field Correction
+# # Loop over sessions
+# for SES in ${SESL[@]}; do
 
-    # Define log file
-    logFolder=/output/01_SSN4/sub-${SID}/ses-${SES}
-    mkdir -p ${logFolder}
-    log=${logFolder}/sub-${SID}_ses-${SES}_log-01-SSN4.txt
+#     # Define log file
+#     logFolder=/output/01_SSN4/sub-${SID}/ses-${SES}
+#     mkdir -p ${logFolder}
+#     log=${logFolder}/sub-${SID}_ses-${SES}_log-01-SSN4.txt
 
-    # Start Script
-    bash \
-        ${scriptsDir}/01_SSN4.sh \
-        ${SID} \
-        ${SES} \
-        ${KI} \
-        &> ${log}
+#     # Start Script
+#     bash \
+#         ${scriptsDir}/01_SSN4.sh \
+#         ${SID} \
+#         ${SES} \
+#         ${KI} \
+#         &> ${log}
 
-done
+# done
  
 
-# 02 Cerebellum + Brain Stem Isolation
-# Loop over sessions
-for SES in ${SESL[@]}; do
+# # 02 Cerebellum + Brain Stem Isolation
+# # Loop over sessions
+# for SES in ${SESL[@]}; do
 
-    # Define log file
-    logFolder=/output/02_CerIso/sub-${SID}/ses-${SES}
-    mkdir -p ${logFolder}
-    log=${logFolder}/sub-${SID}_ses-${SES}_log-02-CerIso.txt
+#     # Define log file
+#     logFolder=/output/02_CerIso/sub-${SID}/ses-${SES}
+#     mkdir -p ${logFolder}
+#     log=${logFolder}/sub-${SID}_ses-${SES}_log-02-CerIso.txt
 
-    # Start Script
-    bash \
-        ${scriptsDir}/02_CerIso.sh \
-        ${SID} \
-        ${SES} \
-        ${KI} \
-        &> ${log}
+#     # Start Script
+#     bash \
+#         ${scriptsDir}/02_CerIso.sh \
+#         ${SID} \
+#         ${SES} \
+#         ${KI} \
+#         &> ${log}
 
-done
+# done
 
 
 # 03 Subject Template Creation and Normalization to SUIT Space
@@ -97,7 +97,7 @@ log=${logFolder}/sub-${SID}_log-03-Template.txt
 
 # Start Script
 bash \
-    ${scriptsDir}/03_Template.sh \
+    ${scriptsDir}/03_MkTmplt.sh \
     ${SID} \
     ${SESN} \
     &> ${log}
