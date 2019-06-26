@@ -8,39 +8,38 @@
 # The pipeline is a multi step approach:
 # 1) T1 bias field correction using N4
 
-# Environment
-inputFolder=/input
-scriptsDir=/software/scripts
+
+# Usage
+usage() {
+    cat<<EOF
+Run this command as:
+${0} sub-<Your-BIDS-Subject-ID-Goes-Here>
+EOF
+}
 
 
-# Test if this at least looks like bids data
-prefix="$(basename ${inputFolder} | cut -c 1-4)"
-sDirName=$(dirname "${inputFolder}" | awk -F/ '{ print $NF }')
-if [ ! "${prefix}" = "sub-" ] || [ ! "${sDirName}" = "sourcedata" ]; then
-    echo "ERROR: The folder you entered as input folder does not seem to be a BIDS data folder of a single subject. Exit"
+# Check input arguments
+if [ -z ${1} ]; then
+    echo "Missing subject argument. Exit."
+    usage
     exit 1
 fi
 
-# Test if there is already a derivatives folder
-dDirName=$(echo $(dirname $(dirname ${inputFolder}))/derivatives)
-if [ ! -d ${dDirName} ]; then
-    
-    echo "No derivatives folder found. Creating derivatives folder"
-    mkdir ${dDirName}
 
-fi
-
-# Derive Subject ID from folder
-SID=$(sDirnName | sed 's/sub-//g')
+# Environment
+SID=${1}
+inputFolder=/input
+subFolder=/output/sub-${SID}
+scriptsDir=/software/scripts
+mkdir -p ${subFolder}
 
 # Session list
-SESL=$(cat ${inputFolder}/sub-${SID}_sessions.tsv \
-           | tr "\t" " " \
-           | sed 's/  */ /g' \
-           | rs -T \
-           | grep session_id \
-           | sed 's/  */ /g' \
-           | cut -d " " -f 2- \
+SESL=$(
+    ls -p ${inputFolder} \
+        | grep ses- \
+        | grep \/ \
+        | sed 's/\///g' \
+        | sed 's/ses-//g'
     )
 SESL=( ${SESL} )
 # Number of sessions
@@ -48,13 +47,44 @@ SESN=${#SESL[@]}
 
 
 # Run scripts
-# T1 Bias Field Correction
+# 01 T1 Bias Field Correction
 # Loop over sessions
 for SES in ${SESL[@]}; do
 
-    bash ${scriptsDir}/01_N4SS.sh ${SID} ${SES}
+    # Define log file
+    logFolder=${subFolder}/ses-${SES}/01_SSN4
+    mkdir -p ${logFolder}
+    log=${logFolder}/sub-${SID}_ses-${SES}_log-01-SSN4.txt
+
+    # Start Script
+    bash \
+        ${scriptsDir}/01_SSN4.sh \
+        ${SID} \
+        ${SES} \
+        &> ${log}
 
 done
+
+
+# 02 Cerebellum + Brain Stem Isolation
+# Loop over sessions
+# for SES in ${SESL[@]}; do
+
+#     # Define log file
+#     logFolder=${subFolder}/ses-${SES}/02_CerIso
+#     mkdir -p ${logFolder}
+#     log=${logFolder}/sub-${SID}_ses-${SES}_log-02-CerIso.txt
+
+#     # Start Script
+#     bash \
+#         ${scriptsDir}/02_CerIso.sh \
+#         ${SID} \
+#         ${SES} \
+#         &> ${log}
+
+# done
+
+
 
 
 
