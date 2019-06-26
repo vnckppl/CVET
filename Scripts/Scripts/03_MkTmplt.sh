@@ -41,7 +41,7 @@ cat <<EOF
 EOF
 
 # Check for which time points cropped cerebelli are availble
-CLIST=( $(find ${iDIR} -iname "mc_roN4_T1.nii.gz" ) )
+CLIST=( $(find ${iDIR} -iname "mc_roN4_T1_?.nii.gz" ) )
 
 # If there are more than two time points, create a template.
 if [ ${#CLIST} -gt 1 ]; then
@@ -52,7 +52,7 @@ if [ ${#CLIST} -gt 1 ]; then
     G=0.25         # Gradient step size (smaller=better+slower; default=0.25)
     F=8x4x2x1      # Shrink factor (default=6x4x2x1)
     S=4x2x1x0      # Smoothing factor (default=3x2x1x0)
-    J=2            # Number of CPUs
+    J=1            # Number of CPUs
 
     # Goto output folder
     cd ${oDIRt}

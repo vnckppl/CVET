@@ -79,7 +79,7 @@ find . -iname "*.nii" | xargs -I {} gzip -9 {}
 fslmaths \
     ${oDIR}/c_roN4_T1.nii.gz \
     -mas ${oDIR}/c_roN4_T1_pcereb.nii.gz \
-    ${oDIR}/mc_roN4_T1.nii.gz
+    ${oDIR}/mc_roN4_T1_${SES}.nii.gz
     
 
 
