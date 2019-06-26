@@ -41,7 +41,7 @@ cat <<EOF
 EOF
 
 # Check for which time points cropped cerebelli are availble
-CLIST=( $(find ${iDIR} -iname "mc_roN4_T1_?.nii.gz" ) )
+CLIST=( $(find ${iDIR} -iname "mc_roN4_T1_*.nii.gz" ) )
 
 # If there are more than two time points, create a template.
 if [ ${#CLIST} -gt 1 ]; then
