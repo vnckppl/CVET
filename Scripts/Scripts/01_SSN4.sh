@@ -5,8 +5,9 @@
 # Environment
 SID="${1}"
 SES="${2}"
+KI=0; if [ ${3} = "KI" ]; then KI=1; fi
 iDIR=/input/ses-${SES}/anat
-oDIR=/output/sub-${SID}/ses-${SES}/01_SSN4
+oDIR=/output/01_SSN4/sub-${SID}/ses-${SES}
 mkdir -p ${oDIR}
 tDIR="/sofware/ANTS-templates"
 
@@ -15,7 +16,7 @@ tDIR="/sofware/ANTS-templates"
 # Logging
 cat <<EOF
 ##############################################################
-### Cerebellar Parcelation Pipeline                        ###
+### Cerebellar Parcellation Pipeline                       ###
 ### PART 1: T1 Skull Stripping and Bias Field Correction   ###
 ### Start date and time: `date`     ###
 ### Subject: ${SID}                                     ###
@@ -133,6 +134,37 @@ N4BiasFieldCorrection \
     -c [125x100x75x50] \
     -o [${oDIR}/N4_T1.nii.gz,${oDIR}/BF_T1.nii.gz] \
     -v 1
+
+# Create image for quality control of bias field correction.
+# For this, we will normalize both the T1 and the N4_T1 image.
+mean_T1=$(fslstats ${oDIR}/T1.nii.gz -m)
+sd_T1=$(fslstats ${oDIR}/T1.nii.gz -s)
+fslmaths ${oDIR}/T1.nii.gz -sub ${mean_T1} ${oDIR}/T1-mean.nii.gz
+fslmaths ${oDIR}/T1-mean.nii.gz -div ${sd_T1} ${oDIR}/zT1.nii.gz
+
+mean_N4T1=$(fslstats ${oDIR}/N4_T1.nii.gz -m)
+sd_N4T1=$(fslstats ${oDIR}/N4_T1.nii.gz -s)
+fslmaths ${oDIR}/N4_T1.nii.gz -sub ${mean_N4T1} ${oDIR}/N4_T1-mean.nii.gz
+fslmaths ${oDIR}/N4_T1-mean.nii.gz -div ${sd_N4T1} ${oDIR}/zN4_T1.nii.gz
+
+fslmaths ${oDIR}/zT1.nii.gz -sub ${oDIR}/zN4_T1.nii.gz ${oDIR}/N4_effect.nii.gz
+
+rm -f ${oDIR}/T1-mean.nii.gz
+rm -f ${oDIR}/zT1.nii.gz
+rm -f ${oDIR}/N4_T1-mean.nii.gz
+rm -f ${oDIR}/zN4_T1.nii.gz
+
+
+
+# Clean up if KeepIntermediate flag is not set
+if [ ${KI} -eq 0 ]; then
+    rm -f ${oDIR}/BF_T1.nii.gz
+    rm -f ${oDIR}/BrainExtractionBrain.nii.gz
+    rm -f ${oDIR}/BrainExtractionMask.nii.gz
+    rm -f ${oDIR}/BrainExtractionMask_dilM2.nii.gz
+    rm -f ${oDIR}/BrainExtractionPrior0GenericAffine.mat
+    rm -f ${oDIR}/T1.nii.gz
+fi
 
 # Exit
 exit
