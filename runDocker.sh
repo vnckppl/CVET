@@ -5,7 +5,10 @@
 usage() {
     cat <<EOF 
 Run this command as:
-${0} sub-<Your-BIDS-Subject-ID-Goes-Here>
+${0} Your-BIDS-Subject-ID-Goes-Here
+
+The BIDS Subject ID is the ID without the 'sub-' part.
+
 EOF
 }
 
@@ -24,6 +27,6 @@ docker \
     -v /Volumes/lhab_data/LHAB/LHAB_v1.1.1/sourcedata/sub-${SUBID}:/input:ro \
     -v /Volumes/lhab_data/LHAB/LHAB_v1.1.1/derivatives/SUIT:/output \
     vkoppelm/suit:lhab \
-    bash /software/scripts/getCerebellarVolumes.sh ${SUBID}
+    bash /software/scripts/getCerebellarVolumes.sh ${SUBID} KeepIntermediate
 
 exit
