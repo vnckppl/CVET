@@ -13,7 +13,8 @@
 usage() {
     cat<<EOF
 Run this command as:
-${0} sub-<Your-BIDS-Subject-ID-Goes-Here>
+${0} sub-<Your-BIDS-Subject-ID-Goes-Here> KeepIntermediate
+'KeepIntermediate' is optional. If you add it, intermediate files will not be deleted.
 EOF
 }
 
@@ -25,13 +26,14 @@ if [ -z ${1} ]; then
     exit 1
 fi
 
+if [ ${2} = "KeepIntermediate" ]; then
+    KI="KI"
+fi
 
 # Environment
 SID=${1}
 inputFolder=/input
-subFolder=/output/sub-${SID}
 scriptsDir=/software/scripts
-mkdir -p ${subFolder}
 
 # Session list
 SESL=$(
@@ -52,7 +54,7 @@ SESN=${#SESL[@]}
 for SES in ${SESL[@]}; do
 
     # Define log file
-    logFolder=${subFolder}/ses-${SES}/01_SSN4
+    logFolder=/output/01_SSN4/sub-${SID}/ses-${SES}
     mkdir -p ${logFolder}
     log=${logFolder}/sub-${SID}_ses-${SES}_log-01-SSN4.txt
 
@@ -61,17 +63,18 @@ for SES in ${SESL[@]}; do
         ${scriptsDir}/01_SSN4.sh \
         ${SID} \
         ${SES} \
+        ${KI} \
         &> ${log}
 
 done
-
+ 
 
 # 02 Cerebellum + Brain Stem Isolation
 # Loop over sessions
 for SES in ${SESL[@]}; do
 
     # Define log file
-    logFolder=${subFolder}/ses-${SES}/02_CerIso
+    logFolder=/output/02_CerIso/sub-${SID}/ses-${SES}
     mkdir -p ${logFolder}
     log=${logFolder}/sub-${SID}_ses-${SES}_log-02-CerIso.txt
 
@@ -80,12 +83,24 @@ for SES in ${SESL[@]}; do
         ${scriptsDir}/02_CerIso.sh \
         ${SID} \
         ${SES} \
+        ${KI} \
         &> ${log}
 
 done
 
 
+# # 03 Subject Template Creation and Normalization to SUIT Space
+# # Define log file
+# logFolder=${subFolder}/subjectTemplate
+# mkdir -p ${logFolder}
+# log=${logFolder}/sub-${SID}_log-03-Template.txt
 
+# # Start Script
+# bash \
+#     ${scriptsDir}/03_Template.sh \
+#     ${SID} \
+#     ${SESN} \
+#     &> ${log}
 
 
 exit

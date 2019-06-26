@@ -5,8 +5,9 @@
 # Environment
 SID="${1}"
 SES="${2}"
-iDIR=/output/sub-${SID}/ses-${SES}/01_SSN4
-oDIR=/output/sub-${SID}/ses-${SES}/02_CerIso
+KI=0; if [ ${3} = "KI" ]; then KI=1; fi
+iDIR=/output/01_SSN4/sub-${SID}/ses-${SES}
+oDIR=/output/02_CerIso/sub-${SID}/ses-${SES}
 mkdir -p ${oDIR}
 
 
@@ -14,7 +15,7 @@ mkdir -p ${oDIR}
 # Logging
 cat <<EOF
 ##############################################################
-### Cerebellar Parcelation Pipeline                        ###
+### Cerebellar Parcellation Pipeline                       ###
 ### PART 2: Cerebellum + Brain Stem Isolation              ###
 ### Start date and time: `date`     ###
 ### Subject: ${SID}                                     ###
@@ -34,7 +35,7 @@ cat <<EOF
 
 EOF
 fslreorient2std \
-    ${oDIR}/N4_T1.nii.gz
+    ${iDIR}/N4_T1.nii.gz \
     ${oDIR}/roN4_T1.nii.gz
 
 
@@ -66,13 +67,29 @@ matlabbatch{1}.spm.tools.suit.isolate_seg.keeptempfiles = 0;
 EOF
 
 # Run isolation job
-/software/run_spm12.sh \
+/software/SPM/run_spm12.sh \
     /software/MCR/v94 \
     batch ${oDIR}/isolate_job.m
 
 # Zip nifti files
 cd ${oDIR}
 find . -iname "*.nii" | xargs -I {} gzip -9 {}
+
+# Mask the cropped cerebelli
+fslmaths \
+    ${oDIR}/c_roN4_T1.nii.gz \
+    -mas ${oDIR}/c_roN4_T1_pcereb.nii.gz \
+    ${oDIR}/mc_roN4_T1.nii.gz
+    
+
+
+# Clean up if KeepIntermediate flag is not set
+if [ ${KI} -eq 0 ]; then
+
+    rm -f ${oDIR}/c_roN4_T1_pcereb.nii.gz
+    rm -f ${oDIR}/c_roN4_T1.nii.gz
+
+fi
 
 # Exit
 exit
