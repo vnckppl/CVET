@@ -48,58 +48,59 @@ SESL=( ${SESL} )
 SESN=${#SESL[@]}
 
 
-# # Run scripts
-# # 01 T1 Bias Field Correction
-# # Loop over sessions
-# for SES in ${SESL[@]}; do
+# Run scripts
+# 01 T1 Bias Field Correction
+# Loop over sessions
+for SES in ${SESL[@]}; do
 
-#     # Define log file
-#     logFolder=/output/01_SSN4/sub-${SID}/ses-${SES}
-#     mkdir -p ${logFolder}
-#     log=${logFolder}/sub-${SID}_ses-${SES}_log-01-SSN4.txt
+    # Define log file
+    logFolder=/output/01_SSN4/sub-${SID}/ses-${SES}
+    mkdir -p ${logFolder}
+    log=${logFolder}/sub-${SID}_ses-${SES}_log-01-SSN4.txt
 
-#     # Start Script
-#     bash \
-#         ${scriptsDir}/01_SSN4.sh \
-#         ${SID} \
-#         ${SES} \
-#         ${KI} \
-#         &> ${log}
+    # Start Script
+    bash \
+        ${scriptsDir}/01_SSN4.sh \
+        ${SID} \
+        ${SES} \
+        ${KI} \
+        &> ${log}
 
-# done
- 
+done
 
-# # 02 Cerebellum + Brain Stem Isolation
-# # Loop over sessions
-# for SES in ${SESL[@]}; do
 
-#     # Define log file
-#     logFolder=/output/02_CerIso/sub-${SID}/ses-${SES}
-#     mkdir -p ${logFolder}
-#     log=${logFolder}/sub-${SID}_ses-${SES}_log-02-CerIso.txt
+# 02 Cerebellum + Brain Stem Isolation
+# Loop over sessions
+for SES in ${SESL[@]}; do
 
-#     # Start Script
-#     bash \
-#         ${scriptsDir}/02_CerIso.sh \
-#         ${SID} \
-#         ${SES} \
-#         ${KI} \
-#         &> ${log}
+    # Define log file
+    logFolder=/output/02_CerIso/sub-${SID}/ses-${SES}
+    mkdir -p ${logFolder}
+    log=${logFolder}/sub-${SID}_ses-${SES}_log-02-CerIso.txt
 
-# done
+    # Start Script
+    bash \
+        ${scriptsDir}/02_CerIso.sh \
+        ${SID} \
+        ${SES} \
+        ${KI} \
+        &> ${log}
+
+done
 
 
 # 03 Subject Template Creation and Normalization to SUIT Space
 # Define log file
-logFolder=${subFolder}/subjectTemplate
+logFolder=/output/03_Template/sub-${SID}
 mkdir -p ${logFolder}
-log=${logFolder}/sub-${SID}_log-03-Template.txt
+log=${logFolder}/sub-${SID}_log-03-MkTmplt.txt
 
 # Start Script
 bash \
     ${scriptsDir}/03_MkTmplt.sh \
     ${SID} \
     ${SESN} \
+    ${KI} \
     &> ${log}
 
 
