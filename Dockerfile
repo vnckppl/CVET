@@ -83,6 +83,8 @@ ENV LD_LIBRARY_PATH=/software/MCR/v94/sys/os/glnxa64:$LD_LIBRARY_PATH
 ### Include the standalone version of SPM+SUIT
 ADD SPM_SUIT /software/SPM
 
+### Set work directory to /software
+WORKDIR /software
 
 ### Run
 CMD ["/bin/bash"]
