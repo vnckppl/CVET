@@ -34,7 +34,12 @@ RUN \
 
 ENV ANTSPATH=/software/ANTS-2.3.1/bin
 ENV PATH="${PATH}":"${ANTSPATH}"
+ENV ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
 
+### Add templates for Skull Stripping
+ADD \
+        Template/MICCAI2012-Multi-Atlas-Challenge-Data \
+        /sofware/ANTS-templates/
 
 ### FSL
 ENV DEBIAN_FRONTEND=noninteractive
