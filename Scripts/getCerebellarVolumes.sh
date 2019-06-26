@@ -68,21 +68,21 @@ done
 
 # 02 Cerebellum + Brain Stem Isolation
 # Loop over sessions
-# for SES in ${SESL[@]}; do
+for SES in ${SESL[@]}; do
 
-#     # Define log file
-#     logFolder=${subFolder}/ses-${SES}/02_CerIso
-#     mkdir -p ${logFolder}
-#     log=${logFolder}/sub-${SID}_ses-${SES}_log-02-CerIso.txt
+    # Define log file
+    logFolder=${subFolder}/ses-${SES}/02_CerIso
+    mkdir -p ${logFolder}
+    log=${logFolder}/sub-${SID}_ses-${SES}_log-02-CerIso.txt
 
-#     # Start Script
-#     bash \
-#         ${scriptsDir}/02_CerIso.sh \
-#         ${SID} \
-#         ${SES} \
-#         &> ${log}
+    # Start Script
+    bash \
+        ${scriptsDir}/02_CerIso.sh \
+        ${SID} \
+        ${SES} \
+        &> ${log}
 
-# done
+done
 
 
 
