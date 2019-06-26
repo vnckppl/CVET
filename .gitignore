@@ -1,5 +1,11 @@
 .gitignore
 .DS_Store
-/Tryout/
-/SPM_SUIT/
+isolateTest.sh
+makeStandaloneSUIT_Cluster_CHPC.sh
+runDocker_test.sh
 /OLD/
+/SPM_SUIT/
+/Template/
+/Tryout/
+
+
