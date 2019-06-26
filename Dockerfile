@@ -83,6 +83,11 @@ ENV LD_LIBRARY_PATH=/software/MCR/v94/sys/os/glnxa64:$LD_LIBRARY_PATH
 ### Include the standalone version of SPM+SUIT
 ADD SPM_SUIT /software/SPM
 
+### Add SUIT template, mask, and atlas
+ADD \
+        Template/SUIT \
+        /sofware/SUIT-templates/
+
 ### Set work directory to /software
 WORKDIR /software
 

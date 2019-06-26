@@ -89,18 +89,18 @@ for SES in ${SESL[@]}; do
 done
 
 
-# # 03 Subject Template Creation and Normalization to SUIT Space
-# # Define log file
-# logFolder=${subFolder}/subjectTemplate
-# mkdir -p ${logFolder}
-# log=${logFolder}/sub-${SID}_log-03-Template.txt
+# 03 Subject Template Creation and Normalization to SUIT Space
+# Define log file
+logFolder=${subFolder}/subjectTemplate
+mkdir -p ${logFolder}
+log=${logFolder}/sub-${SID}_log-03-Template.txt
 
-# # Start Script
-# bash \
-#     ${scriptsDir}/03_Template.sh \
-#     ${SID} \
-#     ${SESN} \
-#     &> ${log}
+# Start Script
+bash \
+    ${scriptsDir}/03_Template.sh \
+    ${SID} \
+    ${SESN} \
+    &> ${log}
 
 
 exit
