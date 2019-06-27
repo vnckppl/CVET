@@ -3,14 +3,36 @@
 # This script creates a subject specific cerebellar template and
 # calcualtes the warp from this template to SUIT space.
 
+# Input arguments
+while getopts "s:n:c:i:r:" OPTION
+do
+     case $OPTION in
+         s)
+             SID=$OPTARG
+             ;;
+         n)
+             SESN=$OPTARG
+             ;;
+         c)
+             CPUS=$OPTARG
+             ;;
+         i)
+             INTERMEDIATE=$OPTARG
+             ;;
+         r)
+             REPORT=$OPTARG
+             ;;
+         ?)
+             exit
+             ;;
+     esac
+done
+
 # Environment
-SID="${1}"
-SESN="${2}"
-KI=0; if [ ${3} = "KI" ]; then KI=1; fi
 iDIR=/output/02_CerIso/sub-${SID}
 oDIR=/output/03_Template/sub-${SID}
-oDIRt=/output/03_Template/sub-${SID}/01_SubjectTemplate
-oDIRs=/output/03_Template/sub-${SID}/02_SUITTemplate
+oDIRt=${oDIR}/01_SubjectTemplate
+oDIRs=${oDIR}/02_SUITTemplate
 mkdir -p ${oDIRt} ${oDIRs}
 tDIR="/sofware/ANTS-templates"
 
@@ -21,7 +43,7 @@ cat <<EOF
 ##############################################################
 ### Cerebellar Parcellation Pipeline                       ###
 ### PART 3: Subject Template Creation and Warping to SUIT  ###
-### Start date and time: `date`     ###
+### Start date and time: `date`      ###
 ### Subject: ${SID}                                     ###
 ### Number of sessions included in the template: ${SESN}         ###
 ##############################################################
@@ -41,7 +63,7 @@ cat <<EOF
 EOF
 
 # Check for which time points cropped cerebelli are availble
-CLIST=( $(find ${iDIR} -iname "mc_roN4_T1_*.nii.gz" ) )
+CLIST=( $(find ${iDIR} -iname "mc_roN4_T1_*.nii.gz" | sort) )
 
 # If there are more than two time points, create a template.
 if [ ${#CLIST} -gt 1 ]; then
@@ -52,7 +74,7 @@ if [ ${#CLIST} -gt 1 ]; then
     G=0.25         # Gradient step size (smaller=better+slower; default=0.25)
     F=8x4x2x1      # Shrink factor (default=6x4x2x1)
     S=4x2x1x0      # Smoothing factor (default=3x2x1x0)
-    J=1            # Number of CPUs
+    J=${CPUS}      # Number of CPUs
 
     # Goto output folder
     cd ${oDIRt}
@@ -61,7 +83,7 @@ if [ ${#CLIST} -gt 1 ]; then
     # Input files are all cropped cerebelli of one subject
     antsMultivariateTemplateConstruction2.sh \
         -d 3 \
-        -o T_ \
+        -o ${oDIRt}/T_ \
         -a 1 \
         -c 2 \
         -i ${I} \
@@ -97,6 +119,10 @@ cd ${oDIRs}
 # Define SUIT Template and Subject Template
 SUIT_Template=/software/SUIT-templates/SUIT.nii.gz
 Subject_Template=${oDIRt}/T_template0.nii.gz
+
+# If there is only one time point, there is no template.
+# In this case, select the single maskes cerebellum as
+# the input file for warping to SUIT space.
 if [ ${#CLIST} -eq 1 ]; then
     Subject_Template=${CLIST}
 fi

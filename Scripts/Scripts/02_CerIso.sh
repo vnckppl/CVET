@@ -2,10 +2,31 @@
 
 # This script isolates the Cerebellum and Brain Stem using the SUIT toolbox for SPM
 
+# Input arguments
+while getopts "s:t:i:r:" OPTION
+do
+     case $OPTION in
+         s)
+             SID=$OPTARG
+             ;;
+         t)
+             SES=$OPTARG
+             ;;
+         i)
+             INTERMEDIATE=$OPTARG
+             ;;
+         r)
+             REPORT=$OPTARG
+             ;;
+         ?)
+             exit
+             ;;
+     esac
+done
+
+
+
 # Environment
-SID="${1}"
-SES="${2}"
-KI=0; if [ ${3} = "KI" ]; then KI=1; fi
 iDIR=/output/01_SSN4/sub-${SID}/ses-${SES}
 oDIR=/output/02_CerIso/sub-${SID}/ses-${SES}
 mkdir -p ${oDIR}
@@ -17,7 +38,7 @@ cat <<EOF
 ##############################################################
 ### Cerebellar Parcellation Pipeline                       ###
 ### PART 2: Cerebellum + Brain Stem Isolation              ###
-### Start date and time: `date`     ###
+### Start date and time: `date`      ###
 ### Subject: ${SID}                                     ###
 ### Session: ${SES}                                           ###
 ##############################################################
@@ -80,11 +101,11 @@ fslmaths \
     ${oDIR}/c_roN4_T1.nii.gz \
     -mas ${oDIR}/c_roN4_T1_pcereb.nii.gz \
     ${oDIR}/mc_roN4_T1_${SES}.nii.gz
-    
+   
 
 
-# Clean up if KeepIntermediate flag is not set
-if [ ${KI} -eq 0 ]; then
+# Clean up if flag to keep intermediate files is not set
+if [ ${INTERMEDIATE} -eq 0 ]; then
 
     rm -f ${oDIR}/c_roN4_T1_pcereb.nii.gz
     rm -f ${oDIR}/c_roN4_T1.nii.gz

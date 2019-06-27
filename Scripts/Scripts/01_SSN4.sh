@@ -2,10 +2,34 @@
 
 # This script performs N4 bias field correction within a brain mask.
 
+# Input arguments
+while getopts "s:t:a:i:r:" OPTION
+do
+     case $OPTION in
+         s)
+             SID=$OPTARG
+             ;;
+         t)
+             SES=$OPTARG
+             ;;
+         a)
+             AVERAGE=$OPTARG
+             ;;
+         i)
+             INTERMEDIATE=$OPTARG
+             ;;
+         r)
+             REPORT=$OPTARG
+             ;;
+         ?)
+             exit
+             ;;
+     esac
+done
+
+
+
 # Environment
-SID="${1}"
-SES="${2}"
-KI=0; if [ ${3} = "KI" ]; then KI=1; fi
 iDIR=/input/ses-${SES}/anat
 oDIR=/output/01_SSN4/sub-${SID}/ses-${SES}
 mkdir -p ${oDIR}
@@ -18,7 +42,7 @@ cat <<EOF
 ##############################################################
 ### Cerebellar Parcellation Pipeline                       ###
 ### PART 1: T1 Skull Stripping and Bias Field Correction   ###
-### Start date and time: `date`     ###
+### Start date and time: `date`      ###
 ### Subject: ${SID}                                     ###
 ### Session: ${SES}                                           ###
 ##############################################################
@@ -36,38 +60,42 @@ cat <<EOF
 
 EOF
 # Count number of T1 weighted images
-T1list=( $(ls ${iDIR}/sub-${SID}_ses-${SES}_run-?_T1w.nii.gz) )
+T1list=( $(ls ${iDIR}/sub-${SID}_ses-${SES}_run-?_T1w.nii.gz | sort) )
 echo "Number of T1-weighted images found: ${#T1list[@]}"
 echo "${T1list[@]}" | tr " " "\n" | sed 's/^  *//g'
 
-if [ ${#T1list[@]} -gt 1 ]; then
-
-    # Average T1 weighted images
-    echo "Averaging the ${#T1list[@]} T1-weighted images..."
-    AnatomicalAverage \
-        -v \
-        -n \
-        -o ${oDIR}/T1.nii.gz \
-        ${T1list[@]}
-
-elif [ ${#T1list[@]} -eq 1 ]; then
-
-    # Copy over the single T1 image
-    cp ${T1list[@]} ${oDIR}/T1.nii.gz
-
-elif [ ${#T1list[@]} -eq 0 ]; then
-
-    # No T1 scans found!
+# When the list is empty (no T1 scans found):
+if [ ${#T1list[@]} -eq 0 ]; then
     echo "No T1-weighted images were found. Check your input folder."
     exit 1
-
-else \
-    # Something went wrong
-    echo "Something went wrong. Please check your code and input arguments."
-    exit 1
-
 fi
 
+# If selected to average images
+if [ ${AVERAGE} -eq 1 ]; then
+
+    # Check if there are is more than one image
+    if [ ${#T1list[@]} -gt 1 ]; then
+
+        # Average T1 weighted images
+        echo "Averaging the ${#T1list[@]} T1-weighted images..."
+        AnatomicalAverage \
+            -v \
+            -n \
+            -o ${oDIR}/T1.nii.gz \
+            ${T1list[@]}
+
+    elif [ ${#T1list[@]} -eq 1 ]; then
+
+        # Copy over the single T1 image
+        echo "Only a single T1-weighted image was found. Proceed the pipeline with this image..."
+        cp ${T1list[@]} ${oDIR}/T1.nii.gz
+
+    fi
+
+elif [ ${AVERAGE} -eq 0 ]; then
+    echo "No averaging selected. We will be using the first image that was collected for this session, ignoring any other T1 images that may have been collected during this session."
+    cp ${T1list[0]} ${oDIR}/T1.nii.gz
+fi
 
 
 # Skull stripping using ANTs Brain Extraction with the
@@ -136,7 +164,7 @@ N4BiasFieldCorrection \
     -v 1
 
 # Create image for quality control of bias field correction.
-# For this, we will normalize both the T1 and the N4_T1 image.
+# For this, we will z-transform both the T1 and the N4_T1 image.
 mean_T1=$(fslstats ${oDIR}/T1.nii.gz -m)
 sd_T1=$(fslstats ${oDIR}/T1.nii.gz -s)
 fslmaths ${oDIR}/T1.nii.gz -sub ${mean_T1} ${oDIR}/T1-mean.nii.gz
@@ -156,8 +184,8 @@ rm -f ${oDIR}/zN4_T1.nii.gz
 
 
 
-# Clean up if KeepIntermediate flag is not set
-if [ ${KI} -eq 0 ]; then
+# Clean up if flag to keep intermediate files is not set
+if [ ${INTERMEDIATE} -eq 0 ]; then
     rm -f ${oDIR}/BF_T1.nii.gz
     rm -f ${oDIR}/BrainExtractionBrain.nii.gz
     rm -f ${oDIR}/BrainExtractionMask.nii.gz
