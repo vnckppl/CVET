@@ -68,13 +68,22 @@ CLIST=( $(find ${iDIR} -iname "mc_roN4_T1_*.nii.gz" | sort) )
 # If there are more than two time points, create a template.
 if [ ${#CLIST} -gt 1 ]; then
 
+    # Select type of parallel computing
+    if [ ${CPUS} -eq 1 ]; then
+        TYPE=0
+    elif [ ${CPUS} -gt 1 ]; then
+        TYPE=2
+    fi
+    
     # Settings for antsMultivariateTemplateConstruction2.sh
+    J=${CPUS}      # Number of CPUs
+    C=${TYPE}      # Type of parallel computing
     I=2            # Iteration limit (default=4)
     Q=10x10x10x5   # Iterations (default=100x100x70x20)
     G=0.25         # Gradient step size (smaller=better+slower; default=0.25)
     F=8x4x2x1      # Shrink factor (default=6x4x2x1)
     S=4x2x1x0      # Smoothing factor (default=3x2x1x0)
-    J=${CPUS}      # Number of CPUs
+
 
     # Goto output folder
     cd ${oDIRt}
@@ -85,13 +94,13 @@ if [ ${#CLIST} -gt 1 ]; then
         -d 3 \
         -o ${oDIRt}/T_ \
         -a 1 \
-        -c 2 \
+        -j ${J} \
+        -c ${C} \
         -i ${I} \
         -q ${Q} \
         -g ${G} \
         -f ${F} \
         -s ${S} \
-        -j ${J} \
         -n 0 \
         -r 1 \
         -m CC \
@@ -155,71 +164,4 @@ antsRegistration  \
    -o [ants_,ants_warped.nii.gz,ants_inv.nii.gz]  \
    -v 1
    
-
-
-# # Apply warp from single subject + single time point space
-# # to SUIT space via subject specific template space by
-# # stacking up the warp parameters.
-# cat <<EOF
-# ##############################################################
-# ### Apply the inverse of the warp parameters to bring the  ###
-# ### SUIT atlas into 'single subject, single time point'    ###
-# ### space by stacking up the warps from single subject     ###
-# ### + time point to subject template space, and from       ###
-# ### subject template space to SUIT space.                  ###
-# ##############################################################
-
-# EOF
-
-# # ANTs normalization: Apply Warp (Subject Template to SUIT Template)
-# echo "--> ANTs apply warp to bring the Subject Template into SUIT space"
-# antsApplyTransforms \
-# -d 3 \
-# -e 3 \
-# -i <<< Subject Cerebellum Template .nii.gz >>> \
-# -r ${tmpl1mm} \
-# -n linear \
-# -t ${oDIR}/ants_1Warp.nii.gz \
-# -t ${oDIR}/ants_0GenericAffine.mat \
-# -o <<< Output File .nii.gz >>>  \
-# -v 1
-
-
-
-
-
-# Apply warps to the skull stripped images
-# for FILE in $(ls ${oDIR}/T${SUB}_ss_*_T1*GenericAffine.mat); do
-
-#     # Subject ID
-#     SES="subject-ID-string"
-
-#     # Announce
-#     echo "Apply warp to ${SES}"
-
-#     # Apply warp
-#     antsApplyTransforms \
-#     -d 3 \
-#     -i ${iDIR}/${SES}_T1.nii.gz \
-#     -r T${SUB}_template0.nii.gz \
-#     -o ${oDIR}/${SES}_2T.nii.gz \
-#     -t ${FILE} \
-#     --float \
-#     -v
-# done
-
-
-# Average images
-# echo "Combine images into 4D file"
-# fslmerge \
-# -t \
-# ${oDIR}/T${SUB}_Template_4D.nii.gz \
-# $(ls ${oDIR}/*_2T.nii.gz)
-
-# echo "Average images"
-# fslmaths \
-# ${oDIR}/T${SUB}_Template_4D.nii.gz \
-# -Tmean \
-# ${oDIR}/T${SUB}_Template.nii.gz
-
 exit
