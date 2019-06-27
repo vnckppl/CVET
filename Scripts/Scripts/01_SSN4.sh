@@ -33,7 +33,7 @@ done
 iDIR=/input/ses-${SES}/anat
 oDIR=/output/01_SSN4/sub-${SID}/ses-${SES}
 mkdir -p ${oDIR}
-tDIR="/sofware/ANTS-templates"
+tDIR="/software/ANTS-templates"
 
 
 

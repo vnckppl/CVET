@@ -39,7 +39,7 @@ ENV ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
 ### Add templates for Skull Stripping
 ADD \
         Template/MICCAI2012-Multi-Atlas-Challenge-Data \
-        /sofware/ANTS-templates/
+        /software/ANTS-templates/
 
 ### FSL
 ENV DEBIAN_FRONTEND=noninteractive
@@ -86,7 +86,7 @@ ADD SPM_SUIT /software/SPM
 ### Add SUIT template, mask, and atlas
 ADD \
         Template/SUIT \
-        /sofware/SUIT-templates/
+        /software/SUIT-templates/
 
 ### Set work directory to /software
 WORKDIR /software

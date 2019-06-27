@@ -144,7 +144,8 @@ SESL=( ${SESL} )
 # Number of sessions
 SESN=${#SESL[@]}
 
-
+DOEN="NEE"
+if [ ${DOEN} = "JA" ]; then
 
 # Run scripts
 # 01 T1 Bias Field Correction
@@ -189,6 +190,7 @@ for SES in ${SESL[@]}; do
 
 done
 
+fi
 
 # 03 Subject Template Creation and Normalization to SUIT Space
 # Define log file
