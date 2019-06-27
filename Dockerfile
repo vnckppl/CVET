@@ -88,6 +88,11 @@ ADD \
         Template/SUIT \
         /software/SUIT-templates/
 
+### Add SPM12 segmentation TPM
+ADD \
+        Template/SPM \
+        /software/SPM-templates/
+
 ### Set work directory to /software
 WORKDIR /software
 

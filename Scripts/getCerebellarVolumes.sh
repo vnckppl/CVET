@@ -190,7 +190,7 @@ for SES in ${SESL[@]}; do
 
 done
 
-fi
+
 
 # 03 Subject Template Creation and Normalization to SUIT Space
 # Define log file
@@ -207,6 +207,28 @@ bash \
     -i ${INTERMEDIATE} \
     -r ${REPORT} \
     &> ${log}
+
+fi
+
+# 04 Segment the whole brain images using SPM12
+# Loop over sessions
+for SES in ${SESL[@]}; do
+
+    # Define log file
+    logFolder=/output/04_Segment/sub-${SID}/ses-${SES}
+    mkdir -p ${logFolder}
+    log=${logFolder}/sub-${SID}_ses-${SES}_log-04-Segment.txt
+
+    # Start Script
+    bash \
+        ${scriptsDir}/04_Segment.sh \
+        -s ${SID} \
+        -t ${SES} \
+        -i ${INTERMEDIATE} \
+        -r ${REPORT} \
+        &> ${log}
+
+done
 
 
 exit
