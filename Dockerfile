@@ -93,6 +93,47 @@ ADD \
         Template/SPM \
         /software/SPM-templates/
 
+
+
+### Install FreeSurfer
+RUN apt-get -y update && \
+    wget -qO- https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz | tar zxv -C /software \
+    --exclude='freesurfer/trctrain' \
+    --exclude='freesurfer/subjects/fsaverage_sym' \
+    --exclude='freesurfer/subjects/fsaverage3' \
+    --exclude='freesurfer/subjects/fsaverage4' \
+    --exclude='freesurfer/subjects/fsaverage5' \
+    --exclude='freesurfer/subjects/fsaverage6' \
+    --exclude='freesurfer/subjects/cvs_avg35' \
+    --exclude='freesurfer/subjects/cvs_avg35_inMNI152' \
+    --exclude='freesurfer/subjects/bert' \
+    --exclude='freesurfer/subjects/V1_average' \
+    --exclude='freesurfer/average/mult-comp-cor' \
+    --exclude='freesurfer/lib/cuda' \
+    --exclude='freesurfer/lib/qt'
+
+RUN /bin/bash -c 'touch /software/freesurfer/.license'
+
+# Set up the environment
+ENV OS=Linux
+ENV FS_OVERRIDE=0
+ENV FIX_VERTEX_AREA=
+ENV SUBJECTS_DIR=/software/freesurfer/subjects
+ENV FSF_OUTPUT_FORMAT=nii.gz
+ENV MNI_DIR=/software/freesurfer/mni
+ENV LOCAL_DIR=/software/freesurfer/local
+ENV FREESURFER_HOME=/software/freesurfer
+ENV FSFAST_HOME=/software/freesurfer/fsfast
+ENV MINC_BIN_DIR=/software/freesurfer/mni/bin
+ENV MINC_LIB_DIR=/software/freesurfer/mni/lib
+ENV MNI_DATAPATH=/software/freesurfer/mni/data
+ENV FMRI_ANALYSIS_DIR=/software/freesurfer/fsfast
+ENV PERL5LIB=/software/freesurfer/mni/lib/perl5/5.8.5
+ENV MNI_PERL5LIB=/software/freesurfer/mni/lib/perl5/5.8.5
+ENV PATH=/software/freesurfer/bin:/software/freesurfer/fsfast/bin:/software/freesurfer/tktools:/software/freesurfer/mni/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
+
+
+
 ### Set work directory to /software
 WORKDIR /software
 
