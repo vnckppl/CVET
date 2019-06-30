@@ -208,7 +208,7 @@ bash \
     -r ${REPORT} \
     &> ${log}
 
-fi
+
 
 # 04 Segment the whole brain images using SPM12
 # Loop over sessions
@@ -229,6 +229,32 @@ for SES in ${SESL[@]}; do
         &> ${log}
 
 done
+
+fi
+
+
+# 05 Extact volumes and create modulated warped GM maps
+# Loop over sessions
+for SES in ${SESL[@]}; do
+
+    # Define log file
+    logFolder=/output/05_ApplyWarp/sub-${SID}/ses-${SES}
+    mkdir -p ${logFolder}
+    log=${logFolder}/sub-${SID}_ses-${SES}_log-05-ApplyWarp.txt
+
+    # Start Script
+    bash \
+        ${scriptsDir}/05_ApplyWarp.sh \
+        -s ${SID} \
+        -t ${SES} \
+        -i ${INTERMEDIATE} \
+        -r ${REPORT} \
+        &> ${log}
+
+done
+
+
+
 
 
 exit
