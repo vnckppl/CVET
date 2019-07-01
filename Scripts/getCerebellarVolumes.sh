@@ -9,6 +9,13 @@
 # 1) T1 bias field correction using N4
 # 2) Cerebellar and brain stem isolation using SPM and the SUIT toolbox
 # 3) Creating a subject specific template and calculating the warp from this template to SUIT space
+# 4) Apply the warps to bring the SUIT atlas into native space. Also, bring the cerebellar GM map
+#    into SUIT space and modulate and smooth this image for a subsequent VBMB style analysis.
+# 5) Extract the GM volume per ROI for each of the 28 lobules of the cerebellum
+# 6) Refine the cerebellar mask using FreeSurfer's cerebellar labels and re-extract the
+#    GM volume per ROI for each of the 28 lobules of the cerebellum
+
+
 
 # Usage
 usage() {
@@ -44,8 +51,13 @@ OPTIONS:
                           mask to refine the SUIT cerebellum labels that 
                           were registered to subject space. By default, 
                           this is step is omitted. Enter 1 as argument to 
-                          process your T1 images with FreeSurfer, or a 
-                          subject's FreeSurfer derivatives if available.
+                          process your T1 images with FreeSurfer as part
+                          part of this pipeline, or 2 if you want to use
+                          previously processed FreeSurfer data. In the
+                          latter case, make sure to mount your FreeSurfer
+                          SUBJECTS folder where your data resides when
+                          starting the container:
+                          -v <local subjects folder>:/freesurfer:ro
 
    $(tput setaf 5)-r$(tput sgr0)                     Write out a ($(tput setaf 5)$(tput bold)r$(tput sgr0))eport with some metrics for 
                           quality control. 
@@ -117,7 +129,7 @@ if [ $? -ne 0 ]; then
 fi  
 
 # Check if FreeSurfer is either set to 1 or to a folder
-if [ ! ${FREESURFER} -eq 0 ] && [ ! ${FREESURFER} -eq 1 ] && [ ! -d ${FREESURFER} ]; then
+if [ ! ${FREESURFER} -eq 0 ] && [ ! ${FREESURFER} -eq 1 ] && [ ! ${FREESURFER} -eq 2 ]; then
     printError "FreeSurfer parameter incorrectly specified. Exit."
 fi  
 
@@ -230,7 +242,6 @@ for SES in ${SESL[@]}; do
 
 done
 
-fi
 
 
 # 05 Extact volumes and create modulated warped GM maps
@@ -253,6 +264,32 @@ for SES in ${SESL[@]}; do
 
 done
 
+fi
+
+# 06 Refine the cerebellar labels with a Extact volumes and create modulated warped GM maps
+# If the user selected to apply FreeSurfer:
+if [ ${FREESURFER} -eq 1 ] || [ ${FREESURFER} -eq 2 ]; then
+
+    # Loop over sessions
+    for SES in ${SESL[@]}; do
+
+        # Define log file
+        logFolder=/output/06_RefineFS/sub-${SID}/ses-${SES}
+        mkdir -p ${logFolder}
+        log=${logFolder}/sub-${SID}_ses-${SES}_log-06-RefineFS.txt
+
+        # Start Script
+        bash \
+            ${scriptsDir}/06_RefineFS.sh \
+            -s ${SID} \
+            -t ${SES} \
+            -i ${INTERMEDIATE} \
+            -f ${FREESURFER} \
+            -r ${REPORT} \
+            &> ${log}
+
+    done
+fi
 
 
 
