@@ -120,21 +120,21 @@ printError() {
 # Check input arguments
 if [ -z ${SID} ]; then
     printError "Missing mandatory subject argument. Exit."
+    exit 1
 fi
 
 # Check if number of CPUs is a number
 [ "${CPUS}" -eq "${CPUS}" ] 2>/dev/null
 if [ $? -ne 0 ]; then
     printError "Number of CPUs incorrectly specified. Exit."
+    exit 1
 fi  
-
-# If 'keep intermediate' has not been set, set it to 0
-if [ -z ${INTERMEDIATE} ]; then INTERMEDIATE=0; fi
 
 # Check if FreeSurfer is either set to 1 or to a folder
 if [ ! -z ${FREESURFER} ]; then
     if [ ! ${FREESURFER} -eq 0 ] && [ ! ${FREESURFER} -eq 1 ] && [ ! ${FREESURFER} -eq 2 ]; then
         printError "FreeSurfer parameter incorrectly specified. Exit."
+        exit 1
     fi
 fi
 
