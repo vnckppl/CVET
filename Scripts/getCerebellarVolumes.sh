@@ -131,13 +131,41 @@ if [ $? -ne 0 ]; then
 fi  
 
 # Check if FreeSurfer is either set to 1 or to a folder
-if [ ! -z ${FREESURFER} ]; then
-    if [ ! ${FREESURFER} -eq 0 ] && [ ! ${FREESURFER} -eq 1 ] && [ ! ${FREESURFER} -eq 2 ]; then
+# Check if FREESURFER is a number
+[ "${FREESURFER}" -eq "${FREESURFER}" ] 2>/dev/null
+OUT=$?
+if [ ${OUT} -eq 0 ]; then
+
+    # If FreeSurfer is set to 1 (process all data with
+    # FreeSurfer), then forward this option to the script
+    if [ ${FREESURFER} -eq 1 ];
+    then FSOPT=1
+
+    # If this number is not 0 or 1
+    elif [ ! ${FREESURFER} -eq 0 ] && [ ! ${FREESURFER} -eq 1 ]; then
         printError "FreeSurfer parameter incorrectly specified. Exit."
+        usage
         exit 1
     fi
-fi
 
+# If FREESURER is not a number...
+elif [ ${OUT} -ne 0 ]; then
+
+    # ...check if the folder that was mounted to the FreeSurfer
+    # folder in the container has any files or folders in it
+    if [ -z "$( ls /freesurfer )" ]; then
+
+        printError "The FreeSurfer data folder that was mounted to the Docker container seems to be empty. Exit."
+        usage
+        exit 1
+
+    elif [ "$( ls /freesurfer )" ]; then
+        # If FreeSurfer was mounted, then
+        # forward this option to the script
+        FSOPT=2
+        
+    fi
+fi
 
 
 # Processing settings
@@ -178,7 +206,7 @@ for SES in ${SESL[@]}; do
         ${scriptsDir}/01_SSN4.sh \
         -s ${SID} \
         -t ${SES} \
-        -c ${CPUS} \
+        -a ${AVERAGE} \
         -i ${INTERMEDIATE} \
         -r ${REPORT} \
         &> ${log}
@@ -269,11 +297,11 @@ for SES in ${SESL[@]}; do
 
 done
 
-fi
+
 
 # 06 Refine the cerebellar labels with a Extact volumes and create modulated warped GM maps
 # If the user selected to apply FreeSurfer:
-if [ ${FREESURFER} -eq 1 ] || [ ${FREESURFER} -eq 2 ]; then
+if [ ${FSOPT} -eq 1 ] || [ ${FSOPT} -eq 2 ]; then
 
     # Loop over sessions
     for SES in ${SESL[@]}; do
@@ -289,7 +317,7 @@ if [ ${FREESURFER} -eq 1 ] || [ ${FREESURFER} -eq 2 ]; then
             -s ${SID} \
             -t ${SES} \
             -i ${INTERMEDIATE} \
-            -f ${FREESURFER} \
+            -f ${FSOPT} \
             -r ${REPORT} \
             &> ${log}
 

@@ -2,27 +2,6 @@
 
 # Wrapper to run the LHAB-SUIT Docker file
 
-# Print error with layout function
-printError() {
-    echo "$(tput setaf 7)$(tput setab 1)${1}$(tput sgr0)"
-    echo
-    usage 
-    exit 1
-}
-
-# Check if Docker is available
-[ docker images ] &>/dev/null
-if [ $? -ne 0 ]; then
-    printError "Docker error. Is Docker running?"
-    exit 1
-fi
-
-# Check if my container is available
-if [ ! "$(docker images | grep -w "vkoppel/suit" | grep -w "lhab" &>/dev/null)" ]; then
-    printError "Can't find image vkoppelm/suit:lhab. Exit."
-    exit 1
-fi
-
 # Usage
 usage() {
     cat<<EOF
@@ -43,8 +22,10 @@ OPTIONS:
                           from this folder name.
 
    $(tput setaf 5)-l$(tput sgr0)                     Path to local FreeSurfer ($(tput setaf 5)$(tput bold)l$(tput sgr0))icense file.
-                          This pipeline uses FreeSurfer commands. A FreeSurfer license (.license or license.txt) is therefore 
-                          required. Get your free license here: https://surfer.nmr.mgh.harvard.edu/registration.html. 
+                          This pipeline uses FreeSurfer commands. A FreeSurfer 
+                          license (.license or license.txt) is therefore 
+                          required. Get your free license here: 
+                          https://surfer.nmr.mgh.harvard.edu/registration.html. 
 
 
 (optional)
@@ -80,6 +61,28 @@ OPTIONS:
 
 EOF
 }
+
+# Print error with layout function
+printError() {
+    echo
+    echo "$(tput setaf 7)$(tput setab 1)${1}$(tput sgr0)"
+    echo
+    usage 
+    exit 1
+}
+
+# Check if Docker is available
+docker images &>/dev/null
+if [ $? -ne 0 ]; then
+    printError "Docker error. Is Docker running?"
+    exit 1
+fi
+
+# Check if my container is available
+if [ ! "$(docker images | grep -w "vkoppelm/suit" | grep -w "lhab")" ]; then
+    printError "Can't find Docker image 'vkoppelm/suit:lhab'. Exit."
+    exit 1
+fi
 
 # Input arguments
 # Defaults
@@ -125,7 +128,7 @@ done
 
 
 # Check input arguments
-if [ -z ${DATA} ]; then
+if [ ! -d ${DATA} ]; then
     printError "Missing mandatory data folder argument. Exit."
     echo
     usage
@@ -153,21 +156,40 @@ if [ $? -ne 0 ]; then
 fi  
 
 # Check if FreeSurfer is either set to 1 or to a folder
-if [ ! ${FREESURFER} -eq 1 ] && [ ! -d ${FREESURFER} ]; then
-    printError "FreeSurfer parameter incorrectly specified. Exit."
-    usage
-    exit 1
-
-    # If a FreeSurfer data path is set, then mount this
-    # path with Docker (see below)
-elif [ -d ${FREESURFER} ]; then
-    FSPATH="-v ${FREESURFER}:/freesurfer:ro"
+# Check if FREESURFER is a number
+[ "${FREESURFER}" -eq "${FREESURFER}" ] 2>/dev/null
+OUT=$?
+if [ ${OUT} -eq 0 ]; then
 
     # If FreeSurfer is set to 1 (process all data with
     # FreeSurfer), then forward this option
-elif [ ${FREESURFER} -eq 1 ]; then
-    FSPROCESS="-f 1"
+    if [ ${FREESURFER} -eq 1 ]; then
+        FSPROCESS="-f 1"
+
+    # If this number is not 1
+    elif [ ! ${FREESURFER} -eq 1 ]; then
+        printError "FreeSurfer parameter incorrectly specified.. Exit."
+        usage
+        exit 1
+    fi
+
+# If FREESURER is not a number...
+elif [ ${OUT} -ne 0 ]; then
+
+    # ...check if it is an existing folder 
+    if [ ! -d ${FREESURFER} ]; then
+        printError "Path to FreeSurfer data not an existing folder.. Exit."
+        usage
+        exit 1
+    
+    # If a FreeSurfer data path is an existing folder, then mount this
+    # path with Docker (see below)
+    elif [ -d ${FREESURFER} ]; then
+        FSPATH="-v ${FREESURFER}:/freesurfer:ro"
+        
+    fi
 fi
+    
 
 
 

@@ -55,7 +55,7 @@ EOF
 # image, average this image. Otherwise, copy the single image.
 cat <<EOF
 ##############################################################
-### Average multiple T1-weighted images (if present)       ###
+### Average multiple T1-weighted images (if chosen)        ###
 ##############################################################
 
 EOF
