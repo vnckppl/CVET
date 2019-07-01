@@ -32,11 +32,7 @@ done
 
 # Environment
 iDIR1=/output/01_SSN4/sub-${SID}/ses-${SES}
-iDIR2=/output/02_CerIso/sub-${SID}/ses-${SES}
-iDIR3=/output/03_Template/sub-${SID}
-iDIR31=${iDIR3}/01_SubjectTemplate
-iDIR32=${iDIR3}/02_SUITTemplate
-iDIR4=/output/04_Segment/sub-${SID}/ses-${SES}
+iDIR5=/output/05_ApplyWarp/sub-${SID}/ses-${SES}
 oDIR=/output/06_RefineFS/sub-${SID}/ses-${SES}
 mkdir -p ${oDIR}
 tDIR="/software/SUIT-templates"
@@ -72,12 +68,14 @@ if [ ${FREESURFER} -eq 2 ]; then
     # Figure out which FS folder to use. Search for subject and
     # session; then for a longitudinal folder. If that is not
     # present, then look for a cross-sectional folder.
-    FSDIR=$(ls /freesurfer/ | grep ${SUB} | grep ${SES} | grep long)
+    FSSUBDIR=$(ls /freesurfer | grep ${SID} | grep ${SES} | grep long)
+    FSDIR="/freesurfer/${FSSUBDIR}"
     if [ ! -d ${FSDIR} ]; then
-        FSDIR=$(ls /freesurfer/ | grep ${SUB} | grep ${SES})
+        FSSUBDIR=$(ls /freesurfer | grep ${SID} | grep ${SES})
+        FSDIR="/freesurfer/${FSSUBDIR}"
     fi
-    if [ ! -f ${FSDIR} ]; then
-        echo "No FreeSurfer folder for Subject ${SUB}, Session ${SES} found. Exit."
+    if [ ! -d ${FSDIR} ]; then
+        echo "No FreeSurfer folder for Subject ${SID}, Session ${SES} found. Exit."
         exit 1
     fi
 
@@ -99,22 +97,38 @@ mri_convert \
 # Rigid registration of FreeSurfer's skull stripped T1
 # to the skull stripped T1 that we created in the first
 # step of this pipeline using ANTs.
-flirt \
-    -dof 6 \
-    -in ${oDIR}/brainmask.nii.gz \
-    -ref ${iDIR1}/BrainExtractionBrain.nii.gz \
-    -out ${oDIR}/FS_to_NativeSpace.nii.gz \
-    -omat ${oDIR}/FS_to_NativeSpace.mat \
-    -v 
+# Settings for registration
+C="[ 1000x500x250x0,1e-6,10 ]" # Convergence
+F="12x8x4x2"                   # Shrink factor
+S="4x3x2x1vox"                 # Smoothing factor
+
+fixed=${iDIR1}/BrainExtractionBrain.nii.gz
+moving=${oDIR}/brainmask.nii.gz
+
+cd ${oDIR}
+
+antsRegistration \
+    -d 3 \
+    -r [ ${fixed} , ${moving} , 1] \
+    -t Rigid[0.1] \
+    -m MI[ ${fixed} , ${moving}, 1, 32, Regular, 0.25 ] \
+    -c ${C} \
+    -f ${F} \
+    -s ${S} \
+    --float \
+    -o [w,FS_to_NativeSpace.nii.gz] \
+    -v
 
 # Apply this rigid transformation to FreeSurfer's
 # labels (including the infratentorial labels)
-flirt \
-    -in ${oDIR}/aseg.nii.gz \
-    -ref ${iDIR1}/BrainExtractionBrain.nii.gz \ \
-    -applyxfm -init ${oDIR}/FS_to_NativeSpace.mat \
-    -out ${oDIR}/aseg_NS.nii.gz \
-    -interp nearestneighbour
+antsApplyTransforms \
+    -d 3 \
+    -i ${oDIR}/aseg.nii.gz \
+    -r ${fixed} \
+    -n NearestNeighbor \
+    -t ${oDIR}/w0GenericAffine.mat \
+    -o ${oDIR}/aseg_NS.nii.gz \
+    --float
 
 # Create cerebellum mask from FreeSurfer labels
 ROIn=(7 8 46 47)                              # Lables numbers
@@ -126,29 +140,29 @@ for R in ${ROIi[@]}; do
         ${oDIR}/aseg_NS.nii.gz \
         -thr ${ROIn[${R}]} \
         -uthr ${ROIn[${R}]} \
-        ${DIR}/${ROIl[${R}]}.nii.gz
+        ${oDIR}/${ROIl[${R}]}.nii.gz
 
 done
 
 fslmaths \
-    ${DIR}/LcWM.nii.gz \
-    -add ${DIR}/LcGM.nii.gz \
-    -add ${DIR}/RcWM.nii.gz \
-    -add ${DIR}/RcGM.nii.gz \
+    ${oDIR}/LcWM.nii.gz \
+    -add ${oDIR}/LcGM.nii.gz \
+    -add ${oDIR}/RcWM.nii.gz \
+    -add ${oDIR}/RcGM.nii.gz \
     -bin \
-    ${DIR}/cerebellumMask.nii.gz
+    ${oDIR}/cerebellumMask.nii.gz
 
 # Reslice
 mri_convert \
-    ${DIR}/cerebellumMask.nii.gz \
-    -rl ${DIR}/atlasNativeSpace.nii.gz \
-    ${DIR}/ccerebellumMask.nii.gz \
+    ${oDIR}/cerebellumMask.nii.gz \
+    -rl ${iDIR5}/atlasNativeSpace.nii.gz \
+    ${oDIR}/ccerebellumMask.nii.gz \
 
 # Apply mask
 fslmaths \
-    ${DIR}/atlasNativeSpace.nii.gz \
-    -mas ${DIR}/ccerebellumMask.nii.gz \
-    ${DIR}/atlasNativeSpace_FSmasked.nii.gz
+    ${iDIR5}/atlasNativeSpace.nii.gz \
+    -mas ${oDIR}/ccerebellumMask.nii.gz \
+    ${oDIR}/atlasNativeSpace_FSmasked.nii.gz
 
 
 
@@ -173,7 +187,7 @@ listOfLobules=$(fslstats \
 
 listMeanVal=$(fslstats \
 	          -K ${oDIR}/atlasNativeSpace_FSmasked.nii.gz \
-	          ${oDIR}/cgm.nii.gz \
+	          ${iDIR5}/cgm.nii.gz \
 	          -m | sed 's/  */,/g' | sed 's/.,$//g' )
 
 listNumVox=$(fslstats \
@@ -207,5 +221,20 @@ eTIV=$(cat ${FSDIR}/stats/aseg.stats | grep EstimatedTotalIntraCranialVol | awk 
 echo SUB,SES,${H1},${H2},eTIV | sed 's/  *//g' > ${oFile}
 echo ${SID},${SES},${listMeanVal},${listNumVox},${eTIV} | sed 's/  *//g' >> ${oFile}
 
+# Clean up intermediate files
+if [ ${INTERMEDIATE} -eq 0 ]; then
+
+    rm -f \
+       ${oDIR}/aseg.nii.gz \
+       ${oDIR}/brainmask.nii.gz \
+       ${oDIR}/FS_to_NativeSpace.nii.gz \
+       ${oDIR}/LcGM.nii.gz \
+       ${oDIR}/LcWM.nii.gz \
+       ${oDIR}/RcGM.nii.gz \
+       ${oDIR}/RcWM.nii.gz \
+       ${oDIR}/T1.nii.gz \
+       ${oDIR}/w0GenericAffine.mat
+
+fi
 
 exit

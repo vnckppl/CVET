@@ -128,10 +128,15 @@ if [ $? -ne 0 ]; then
     printError "Number of CPUs incorrectly specified. Exit."
 fi  
 
+# If 'keep intermediate' has not been set, set it to 0
+if [ -z ${INTERMEDIATE} ]; then INTERMEDIATE=0; fi
+
 # Check if FreeSurfer is either set to 1 or to a folder
-if [ ! ${FREESURFER} -eq 0 ] && [ ! ${FREESURFER} -eq 1 ] && [ ! ${FREESURFER} -eq 2 ]; then
-    printError "FreeSurfer parameter incorrectly specified. Exit."
-fi  
+if [ ! -z ${FREESURFER} ]; then
+    if [ ! ${FREESURFER} -eq 0 ] && [ ! ${FREESURFER} -eq 1 ] && [ ! ${FREESURFER} -eq 2 ]; then
+        printError "FreeSurfer parameter incorrectly specified. Exit."
+    fi
+fi
 
 
 
@@ -156,8 +161,7 @@ SESL=( ${SESL} )
 # Number of sessions
 SESN=${#SESL[@]}
 
-DOEN="NEE"
-if [ ${DOEN} = "JA" ]; then
+
 
 # Run scripts
 # 01 T1 Bias Field Correction
@@ -180,6 +184,7 @@ for SES in ${SESL[@]}; do
         &> ${log}
 
 done
+
 
 
 # 02 Cerebellum + Brain Stem Isolation
