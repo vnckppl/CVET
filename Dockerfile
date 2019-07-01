@@ -8,12 +8,9 @@ RUN \
         mkdir -p /input && \
         mkdir -p /output
 
-### Copy over scripts
-ADD \
-        Scripts/* \
-        /software/scripts/
 
-### Install ANTs
+
+### Install Dependencies
 RUN \
         apt-get update && \
         apt-get dist-upgrade -y --no-install-recommends && \
@@ -28,6 +25,12 @@ RUN \
         gnupg2 \
         unzip rs
 
+
+
+############
+### ANTS ###
+############
+### Install ANTs
 RUN \
         sourceDir="/software/ANTS-source" && \
         mkdir -p ${sourceDir} && \
@@ -52,7 +55,11 @@ ADD \
         Template/MICCAI2012-Multi-Atlas-Challenge-Data \
         /software/ANTS-templates/
 
-### FSL
+
+
+###########
+### FSL ###
+###########
 ENV DEBIAN_FRONTEND=noninteractive
 # Sometimes the apt-key command results in an error and building the container breaks.
 # If you just rerun the build command without removing the images, the build process
@@ -82,6 +89,10 @@ ENV \
         FSLWISH=/usr/bin/wish
 
 
+
+###########################
+### MATLAB + SPM + SUIT ###
+###########################
 ### Matlab Runtime (for SPM+SUIT standalone)
 RUN \
         mkdir /software/MCRinstaller && \
@@ -113,6 +124,9 @@ ADD \
 
 
 
+##################
+### FreeSurfer ###
+##################
 ### Install FreeSurfer
 RUN apt-get -y update && \
         wget -qO- https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz | tar zxv -C /software \
@@ -151,6 +165,14 @@ ENV \
         PATH=${PATH}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/software/freesurfer/bin:/software/freesurfer/fsfast/bin:/software/freesurfer/tktools:/software/freesurfer/mni/bin
 
 
+
+###############
+### Scripts ###
+###############
+### Copy over scripts
+ADD \
+        Scripts/* \
+        /software/scripts/
 
 ### Set work directory to /software
 WORKDIR /software
