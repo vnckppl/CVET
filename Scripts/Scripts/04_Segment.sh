@@ -28,8 +28,8 @@ done
 
 # Environment
 tDIR=/software/SPM-templates
-iDIR=/output/02_CerIso/sub-${SID}/ses-${SES}
-oDIR=/output/04_Segment/sub-${SID}/ses-${SES}
+iDIR=/data/out/02_CerIso/sub-${SID}/ses-${SES}
+oDIR=/data/out/04_Segment/sub-${SID}/ses-${SES}
 mkdir -p ${oDIR}
 
 

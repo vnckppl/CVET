@@ -29,8 +29,8 @@ do
 done
 
 # Environment
-iDIR=/output/02_CerIso/sub-${SID}
-oDIR=/output/03_Template/sub-${SID}
+iDIR=/data/out/02_CerIso/sub-${SID}
+oDIR=/data/out/03_Template/sub-${SID}
 oDIRt=${oDIR}/01_SubjectTemplate
 oDIRs=${oDIR}/02_SUITTemplate
 mkdir -p ${oDIRt} ${oDIRs}

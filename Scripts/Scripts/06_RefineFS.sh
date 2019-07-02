@@ -31,9 +31,9 @@ done
 
 
 # Environment
-iDIR1=/output/01_SSN4/sub-${SID}/ses-${SES}
-iDIR5=/output/05_ApplyWarp/sub-${SID}/ses-${SES}
-oDIR=/output/06_RefineFS/sub-${SID}/ses-${SES}
+iDIR1=/data/out/01_SSN4/sub-${SID}/ses-${SES}
+iDIR5=/data/out/05_ApplyWarp/sub-${SID}/ses-${SES}
+oDIR=/data/out/06_RefineFS/sub-${SID}/ses-${SES}
 mkdir -p ${oDIR}
 tDIR="/software/SUIT-templates"
 

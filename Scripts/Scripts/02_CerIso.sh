@@ -27,8 +27,8 @@ done
 
 
 # Environment
-iDIR=/output/01_SSN4/sub-${SID}/ses-${SES}
-oDIR=/output/02_CerIso/sub-${SID}/ses-${SES}
+iDIR=/data/out/01_SSN4/sub-${SID}/ses-${SES}
+oDIR=/data/out/02_CerIso/sub-${SID}/ses-${SES}
 mkdir -p ${oDIR}
 
 

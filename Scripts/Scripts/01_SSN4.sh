@@ -30,8 +30,8 @@ done
 
 
 # Environment
-iDIR=/input/ses-${SES}/anat
-oDIR=/output/01_SSN4/sub-${SID}/ses-${SES}
+iDIR=/data/in/sub-${SID}/ses-${SES}/anat
+oDIR=/data/out/01_SSN4/sub-${SID}/ses-${SES}
 mkdir -p ${oDIR}
 tDIR="/software/ANTS-templates"
 

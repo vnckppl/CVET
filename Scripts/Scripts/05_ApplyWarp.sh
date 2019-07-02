@@ -25,13 +25,13 @@ done
 
 
 # Environment
-iDIR1=/output/01_SSN4/sub-${SID}/ses-${SES}
-iDIR2=/output/02_CerIso/sub-${SID}/ses-${SES}
-iDIR3=/output/03_Template/sub-${SID}
+iDIR1=/data/out/01_SSN4/sub-${SID}/ses-${SES}
+iDIR2=/data/out/02_CerIso/sub-${SID}/ses-${SES}
+iDIR3=/data/out/03_Template/sub-${SID}
 iDIR31=${iDIR3}/01_SubjectTemplate
 iDIR32=${iDIR3}/02_SUITTemplate
-iDIR4=/output/04_Segment/sub-${SID}/ses-${SES}
-oDIR=/output/05_ApplyWarp/sub-${SID}/ses-${SES}
+iDIR4=/data/out/04_Segment/sub-${SID}/ses-${SES}
+oDIR=/data/out/05_ApplyWarp/sub-${SID}/ses-${SES}
 mkdir -p ${oDIR}
 tDIR="/software/SUIT-templates"
 
