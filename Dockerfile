@@ -179,4 +179,4 @@ ADD \
 WORKDIR /software
 
 ### Run
-CMD ["/bin/bash"]
+ENTRYPOINT ["python3", "/software/scripts/CVET.py"]
