@@ -141,7 +141,7 @@ for SID in SUBLIST:
     
     # Create a list with all sessions
     # List all the session folders in the subject folder
-    SESLIST = [os.path.basename(x) for x in glob(SUBDIR+'/ses-*')]
+    SESLIST = [os.path.basename(x) for x in sorted(glob(SUBDIR+'/ses-*'))]
     # Strip the 'ses-' part
     SESLIST = ([s.replace('ses-', '') for s in SESLIST])
     
@@ -173,16 +173,13 @@ for SID in SUBLIST:
         
         # Start script
         run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
-        
-        # Close log file
-        log.close()
     
     
     
     # 02 Cerebellum + Brain Stem Isolation
     # Loop over sessions
     for SES in SESLIST:
-
+        
         # Announce
         print('               +----------> Cerebellar Isolation  -- Session '+SES)
         
@@ -197,16 +194,13 @@ for SID in SUBLIST:
         
         # Start script
         run_cmd(arguments, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
-        
-        # Close log file
-        log.close()
     
     
     
     # 03 Subject Template Creation and Normalization to SUIT Space
     # Announce
     print('               +----------> Build Subject Template and Normalize to SUIT')
-
+    
     # Define log file
     logFolder='/data/out/03_MkTmplt/sub-'+SID+'/ses-'+SES
     os.makedirs(logFolder)
@@ -218,9 +212,6 @@ for SID in SUBLIST:
     
     # Start script
     run_cmd(arguments, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
-    
-    # Close log file
-    log.close()
     
     
     
@@ -242,9 +233,6 @@ for SID in SUBLIST:
         
         # Start script
         run_cmd(arguments, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
-        
-        # Close log file
-        log.close()
     
     
     
@@ -266,9 +254,6 @@ for SID in SUBLIST:
         
         # Start script
         run_cmd(arguments, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
-        
-        # Close log file
-        log.close()
     
     
     
@@ -292,6 +277,3 @@ for SID in SUBLIST:
             
             # Start script
             run_cmd(arguments, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
-            
-            # Close log file
-            log.close()
