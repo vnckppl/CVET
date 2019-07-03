@@ -169,6 +169,7 @@ ENV \
 ###############
 ### Scripts ###
 ###############
+RUN  apt-get install -y python3
 ### Copy over scripts
 ADD \
         Scripts/* \

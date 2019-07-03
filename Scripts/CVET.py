@@ -4,6 +4,7 @@ import sys
 import argparse
 import os
 import subprocess
+from glob import glob
 
 
 # Gather arguments
@@ -50,13 +51,16 @@ if __name__ == "__main__":
                         "If not specified freesurfer data will be saved to {"
                         "out_dir}/freesurfer")
     parser.add_argument('-a','--average',
-                        help='Create an average from multiple T1-weighted '
+                        help='Select 1 to create an average from multiple T1-weighted '
                         'images if more than one T1-weighted image was ' 
-                        'collected per session. Default is to not average '
+                        'collected per session. Default (0) is to not average '
                         'weighted images, but to take the first '
                         'T1-weighted image collected during a session. ' 
                         'If an average is created, this will be used for '
-                        'the rest of the pipeline. ')
+                        'the rest of the pipeline. ',
+                        choices=[0,1],
+                        default=0,
+                        type=int)
     parser.add_argument('--n_cpus',
                         help='Number of CPUs/cores available to use.',
                         default=1,
@@ -64,7 +68,8 @@ if __name__ == "__main__":
     parser.add_argument('--intermediate_files',
                         help='How to handle intermediate files (0=delete, 1=keep)',
                         choices=[0,1],
-                        default=1)
+                        default=1,
+                        type=int)
     parser.add_argument('--report',
                         help='Generate a report for quality control of the data processing')
     
@@ -83,22 +88,10 @@ if len(files) < 1:
     sys.exit(1)
 elif len(files) > 0:
     # Forward option to shell script
-    aF='-f 1'
     FSOPT=1
 
 if args.freesurfer_run == True:
-    aF='-f 2'
     FSOPT=2
-
-
-
-# Convert options to format for shell scripts
-aS='-s '+SID
-aT='-t '+SES
-aA='-a '+args.average
-aC='-c '+args.n_cpus
-aI='-i '+args.intermediate_files
-aR='-r '+arg.report
 
 
 
@@ -108,25 +101,43 @@ scriptsDir='/software/scripts'
 
 
 
+# Define function to pass environment variable to shell
+def run_cmd(cmd, logfile, env={}):
+    merged_env = os.environ
+    merged_env.update(env)
+    try:
+        with open(logfile, 'w') as shelloutput:
+            subprocess.run(cmd, stdout=shelloutput, stderr=shelloutput, check=True, env=merged_env)
+    except subprocess.CalledProcessError as err:
+        raise Exception(err)
+    
+    
+    
 # Create a list of subjects that need to be processed
 # If the participant_label has not been specified,
 # process all subjects
-if not arg.participant_label:
+if not args.participant_label:
     # List all the subject folders in the input folder
-    SUBLIST = [os.path.basename(x) for x in glob('/data/in/sub-*')]
+    SUBLIST = [os.path.basename(x) for x in glob(inputFolder+'/sub-*')]
     # Strip the 'sub-' part
     SUBLIST = ([s.replace('sub-', '') for s in SUBLIST])
 else:
     # If a single or list of subjects has been specified
     # as argument to participant_label, then forward
     # these subjects to the loop
-    SUBLIST=arg.participant_label
-    
+    SUBLIST=args.participant_label
+
+
+
+
 # Loop over subjects
 for SID in SUBLIST:
+
+    # Announce
+    print('Working on: Subject '+SID)
     
     # Subject DIR
-    SUBDIR = '/data/in/sub-'+SID
+    SUBDIR = inputFolder+'/sub-'+SID
     
     # Create a list with all sessions
     # List all the session folders in the subject folder
@@ -136,23 +147,11 @@ for SID in SUBLIST:
     
     # Count the sessions
     SESN=len(SESLIST)
-    aN='-n SESN'
     
     
     
     
     ### RUN SCRIPTS
-
-
-
-    # Define function to pass environment variable to shell
-    def run_cmd(cmd, env={}):
-        merged_env = os.environ
-        merged_env.update(env)
-        try:
-            subprocess.run(cmd, shell=True, check=True, env=merged_env)
-        except subprocess.CalledProcessError as err:
-            raise Exception(err)
     
     
     
@@ -160,66 +159,68 @@ for SID in SUBLIST:
     # Loop over sessions
     for SES in SESLIST:
         
+        # Announce
+        print('               +----------> Bias Field Correction -- Session '+SES)
+        
         # Define log file
         logFolder='/data/out/01_SSN4/sub-'+SID+'/ses-'+SES
         os.makedirs(logFolder)
         log=logFolder+'/sub-'+SID+'_ses-'+SES+'_log-01-SSN4.txt'
-        logFile = open(log, 'w')
-        sys.stdout = sys.stderr = logFile
         
         # Arguments
         script=scriptsDir+'/01_SSN4.sh'
-        arguments=[script, aS, aT, aA, aI, aR]
+        arguments=[script, '-s', SID, '-t', SES, '-a', str(args.average), '-i', str(args.intermediate_files)]
         
         # Start script
-        run_cmd(arguments, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': args.n_cpus})
+        run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
         
         # Close log file
-        logFile.close()
+        log.close()
     
     
     
     # 02 Cerebellum + Brain Stem Isolation
     # Loop over sessions
-    # Define log file
     for SES in SESLIST:
+
+        # Announce
+        print('               +----------> Cerebellar Isolation  -- Session '+SES)
         
         # Define log file
         logFolder='/data/out/02_CerIso/sub-'+SID+'/ses-'+SES
         os.makedirs(logFolder)
         log=logFolder+'/sub-'+SID+'_ses-'+SES+'_log-02-CerIso.txt'
-        logFile = open(log, 'w')
-        sys.stdout = sys.stderr = logFile
         
         # Arguments
         script=scriptsDir+'/02_CerIso.sh'
-        arguments=[script, aS, aT, aI, aR]
+        arguments=[script, '-s', SID, '-t', SES, '-i', str(args.intermediate_files)]
         
         # Start script
-        run_cmd(arguments, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': args.n_cpus})
+        run_cmd(arguments, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
         
         # Close log file
-        logFile.close()
+        log.close()
     
     
     
     # 03 Subject Template Creation and Normalization to SUIT Space
+    # Announce
+    print('               +----------> Build Subject Template and Normalize to SUIT')
+
     # Define log file
     logFolder='/data/out/03_MkTmplt/sub-'+SID+'/ses-'+SES
     os.makedirs(logFolder)
     log=logFolder+'/sub-'+SID+'_ses-'+SES+'_log-03-MkTmplt.txt'
-    logFile = open(log, 'w')
-    sys.stdout = sys.stderr = logFile
     
     # Arguments
     script=scriptsDir+'/03_MkTmplt.sh'
-    arguments=[script, aS, aN, aC, aI, aR]
+    arguments=[script, '-s', SID, '-n', SESN, '-c', str(args.n_cpus), '-i', str(args.intermediate_files)]
     
     # Start script
-    subprocess.call(arguments)
-        
+    run_cmd(arguments, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
+    
     # Close log file
-    logFile.close()
+    log.close()
     
     
     
@@ -227,22 +228,23 @@ for SID in SUBLIST:
     # Loop over sessions
     for SES in SESLIST:
         
+        # Announce
+        print('               +----------> Tissue Segmentation   -- Session '+SES)
+        
         # Define log file
         logFolder='/data/out/04_Segment/sub-'+SID+'/ses-'+SES
         os.makedirs(logFolder)
         log=logFolder+'/sub-'+SID+'_ses-'+SES+'_log-04-Segment.txt'
-        logFile = open(log, 'w')
-        sys.stdout = sys.stderr = logFile
         
         # Arguments
         script=scriptsDir+'/04_Segment.sh'
-        arguments=[script, aS, aT, aI, aR]
+        arguments=[script, '-s', SID, '-t', SES, '-i', str(args.intermediate_files)]
         
         # Start script
-        run_cmd(arguments, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': args.n_cpus})
+        run_cmd(arguments, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
         
         # Close log file
-        logFile.close()
+        log.close()
     
     
     
@@ -250,22 +252,23 @@ for SID in SUBLIST:
     # Loop over sessions
     for SES in SESLIST:
         
+        # Announce
+        print('               +----------> Volume Extraction     -- Session '+SES)
+        
         # Define log file
         logFolder='/data/out/05_ApplyWarp/sub-'+SID+'/ses-'+SES
         os.makedirs(logFolder)
         log=logFolder+'/sub-'+SID+'_ses-'+SES+'_log-05-ApplyWarp.txt'
-        logFile = open(log, 'w')
-        sys.stdout = sys.stderr = logFile
         
         # Arguments
         script=scriptsDir+'/05_ApplyWarp.sh'
-        arguments=[script, aS, aT, aI, aR]
+        arguments=[script, '-s', SID, '-t', SES, '-i', str(args.intermediate_files)]
         
         # Start script
-        run_cmd(arguments, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': args.n_cpus})
+        run_cmd(arguments, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
         
         # Close log file
-        logFile.close()
+        log.close()
     
     
     
@@ -274,20 +277,21 @@ for SID in SUBLIST:
     if [ FSOPT == 1 ] | [ FSOPT == 2 ]:
         
         for SES in SESLIST:
-        
+            
+            # Announce
+            print('               +----------> Volume Refinement     -- Session '+SES)
+            
             # Define log file
             logFolder='/data/out/06_RefineFS/sub-'+SID+'/ses-'+SES
             os.makedirs(logFolder)
             log=logFolder+'/sub-'+SID+'_ses-'+SES+'_log-06-RefineFS.txt'
-            logFile = open(log, 'w')
-            sys.stdout = sys.stderr = logFile
             
             # Arguments
             script=scriptsDir+'/06_RefineFS.sh'
-            arguments=[script, aS, aT, aI, aF, aR]
+            arguments=[script, '-s', SID, '-t', SES, '-i', str(args.intermediate_files), '-f', str(FSOPT)]
             
             # Start script
-            run_cmd(arguments, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': args.n_cpus})
+            run_cmd(arguments, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
             
             # Close log file
-            logFile.close()
+            log.close()
