@@ -94,6 +94,15 @@ ICVm=$(fslstats ${oDIR}/SPMbrainMask.nii.gz -m)
 ICVv=$(fslstats ${oDIR}/SPMbrainMask.nii.gz -v | awk '{ print $NF }')
 
 
+
+# Reslice GM map to cropped cerebellum space
+mri_convert \
+    ${iDIR4}/c1roN4_T1.nii.gz \
+    -rl ${iDIR2}/c_roN4_T1.nii.gz \
+    ${oDIR}/cgm.nii.gz
+
+
+
 # Extract volume per lobule for all regions
 echo "Extract volume per lobule for all regions"
 listOfLobules=$(fslstats \
@@ -152,11 +161,7 @@ cat <<EOF
 
 EOF
 
-# Reslice GM map to cropped cerebellum space
-mri_convert \
-    ${iDIR4}/c1roN4_T1.nii.gz \
-    -rl ${iDIR2}/c_roN4_T1.nii.gz \
-    ${oDIR}/cgm.nii.gz
+
 
 # Apply warp: Cerebbellar GM map to SUIT space (forward warp)
 itwarp=$(ls ${iDIR31}/T_mc_roN4_T1_*0GenericAffine.mat | grep ${SES})
