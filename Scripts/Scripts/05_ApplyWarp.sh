@@ -65,14 +65,19 @@ cat <<EOF
 EOF
 
 # Warp atlas back to native space
-twarp=$(ls ${iDIR31}/T_mc_roN4_T1_*0GenericAffine.mat | grep ${SES})
+# If thereis more than one session, there is an additional rigid transformation
+# from subject+session space to subject template space
+CLIST=( $(find ${iDIR2} -iname "mc_roN4_T1_*.nii.gz" | sort) )
+if [ ${#CLIST[@]} -gt 1 ]; then
+    twarp=$(echo -t [$(ls ${iDIR31}/T_mc_roN4_T1_*0GenericAffine.mat | grep ${SES}),1] )
+fi
 
 antsApplyTransforms \
     -d 3 \
     -i ${tDIR}/Cerebellum-SUIT.nii.gz \
     -r ${iDIR2}/c_roN4_T1.nii.gz \
     -o ${oDIR}/atlasNativeSpace.nii.gz \
-    -t [${twarp},1] \
+    ${twarp} \
     -t [${iDIR32}/ants_0GenericAffine.mat,1] \
     -t ${iDIR32}/ants_1InverseWarp.nii.gz \
     -n NearestNeighbor \
@@ -163,8 +168,12 @@ EOF
 
 
 
-# Apply warp: Cerebbellar GM map to SUIT space (forward warp)
-itwarp=$(ls ${iDIR31}/T_mc_roN4_T1_*0GenericAffine.mat | grep ${SES})
+# Apply warp: Cerebellar GM map to SUIT space (forward warp)
+# If there is more than one session, there is an additional rigid transformation
+# from subject+session space to subject template space.
+if [ ${#CLIST[@]} -gt 1 ]; then
+    itwarp=$(echo -t $(ls ${iDIR31}/T_mc_roN4_T1_*0GenericAffine.mat | grep ${SES}) )
+fi
 
 antsApplyTransforms \
     -d 3 \
@@ -173,7 +182,7 @@ antsApplyTransforms \
     -o ${oDIR}/wcgm.nii.gz \
     -t ${iDIR32}/ants_1Warp.nii.gz \
     -t ${iDIR32}/ants_0GenericAffine.mat \
-    -t ${itwarp} \
+    ${itwarp} \
     --float \
     -v
 

@@ -62,11 +62,11 @@ cat <<EOF
 
 EOF
 
-# Check for which time points cropped cerebelli are availble
+# Check for which time points cropped cerebelli are available
 CLIST=( $(find ${iDIR} -iname "mc_roN4_T1_*.nii.gz" | sort) )
 
 # If there are more than two time points, create a template.
-if [ ${#CLIST} -gt 1 ]; then
+if [ ${#CLIST[@]} -gt 1 ]; then
 
     # Select type of parallel computing
     if [ ${CPUS} -eq 1 ]; then
@@ -78,8 +78,8 @@ if [ ${#CLIST} -gt 1 ]; then
     # Settings for antsMultivariateTemplateConstruction2.sh
     J=${CPUS}      # Number of CPUs
     C=${TYPE}      # Type of parallel computing
-    I=2            # Iteration limit (default=4)
-    Q=10x10x10x5   # Iterations (default=100x100x70x20)
+    I=4            # Iteration limit (default=4)
+    Q=25x15x10x5   # Iterations (default=100x100x70x20)
     G=0.25         # Gradient step size (smaller=better+slower; default=0.25)
     F=8x4x2x1      # Shrink factor (default=6x4x2x1)
     S=4x2x1x0      # Smoothing factor (default=3x2x1x0)
@@ -107,12 +107,19 @@ if [ ${#CLIST} -gt 1 ]; then
         -t Rigid \
         ${CLIST[@]}
 
+elif [ ${#CLIST[@]} -eq 1 ]; then
+    
+    echo "Only one session with imaging data found."
+    echo "Skip template creation."
+    
 fi
 
 
 
 # Warp subject specific cerebellar template to SUIT space
 cat <<EOF
+
+
 ##############################################################
 ### Warp subject specific cerebellar template to SUIT      ###
 ### space if there is more than one session. If there is   ###
@@ -132,7 +139,7 @@ Subject_Template=${oDIRt}/T_template0.nii.gz
 # If there is only one time point, there is no template.
 # In this case, select the single maskes cerebellum as
 # the input file for warping to SUIT space.
-if [ ${#CLIST} -eq 1 ]; then
+if [ ${#CLIST[@]} -eq 1 ]; then
     Subject_Template=${CLIST}
 fi
 
