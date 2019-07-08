@@ -41,7 +41,7 @@ tDIR="/sofware/ANTS-templates"
 # Logging
 cat <<EOF
 ##############################################################
-### Cerebellar Parcellation Pipeline                       ###
+### CVET - Cerebellar Volume Extration Tool                ###
 ### PART 3: Subject Template Creation and Warping to SUIT  ###
 ### Start date and time: `date`      ###
 ### Subject: ${SID}                                     ###
