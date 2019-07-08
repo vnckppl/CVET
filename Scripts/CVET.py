@@ -141,11 +141,29 @@ if __name__ == "__main__":
         
         # Create a list with all sessions
         # Test for sessions with T1w images
-        T1LIST=sorted(glob(SUBDIR+'/ses-*/anat/*T1w.nii*'))
+        # There may be more than 1 T1 images in the anat
+        # folder (multiple runs). Therefore, only
+        # pick one from each sessions folder: If there is
+        # a 'run' identifier in the file names, only pick
+        # 'run-1'.
+        #T1LIST=sorted(glob(SUBDIR+'/ses-*/anat/*T1w.nii*'))
         
-        # List all the session folders in the subject folder
-        SESLIST=[i.split('/anat',1)[0] for i in T1LIST]
-        SESLIST=[i.split('ses-',1)[1] for i in SESLIST]
+        # List all time points with anat folders
+        ANATLIST=sorted(glob(SUBDIR+'/ses-*/anat'))
+        ANATLIST=[i.split('/anat',1)[0] for i in ANATLIST]
+        ANATLIST=[i.split('ses-',1)[1] for i in ANATLIST]
+        
+        # Test if there are T1-weigthed image(s) in the
+        # anat folders of these time points. If this is then
+        # case, add the session to the list of sessions
+        SESLIST=[]
+        for ASES in ANATLIST:
+            # List all the T1-weighted images for this time point
+            T1LIST=sorted(glob(SUBDIR+'/ses-'+ASES+'/anat/*T1w.nii*'))
+            # If there is at least one image, add this
+            # session to the session list
+            if len(T1LIST) > 0:
+                SESLIST.append(ASES)
         
         # Count the sessions
         SESN=len(SESLIST)
