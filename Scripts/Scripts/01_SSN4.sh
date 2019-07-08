@@ -148,7 +148,7 @@ python3 <<PY3
 import nibabel as nb
 
 # Environment
-DIR=${oDIR}
+DIR='${oDIR}'
 
 # Load data
 T1=nb.load(DIR+'T1.nii.gz')
