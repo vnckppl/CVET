@@ -140,10 +140,12 @@ if __name__ == "__main__":
         SUBDIR = inputFolder+'/sub-'+SID
         
         # Create a list with all sessions
+        # Test for sessions with T1w images
+        T1LIST=sorted(glob(SUBDIR+'/ses-*/anat/*T1w.nii*'))
+        
         # List all the session folders in the subject folder
-        SESLIST = [os.path.basename(x) for x in sorted(glob(SUBDIR+'/ses-*'))]
-        # Strip the 'ses-' part
-        SESLIST = ([s.replace('ses-', '') for s in SESLIST])
+        SESLIST=[i.split('/anat',1)[0] for i in T1LIST]
+        SESLIST=[i.split('ses-',1)[1] for i in SESLIST]
         
         # Count the sessions
         SESN=len(SESLIST)
