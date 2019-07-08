@@ -169,7 +169,9 @@ ENV \
 ###############
 ### Scripts ###
 ###############
-RUN  apt-get install -y python3
+RUN  apt-get install -y python3 python3-pip && \
+        pip3 install nibabel
+
 ### Copy over scripts
 ADD \
         Scripts/* \
