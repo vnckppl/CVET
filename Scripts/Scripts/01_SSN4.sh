@@ -40,7 +40,7 @@ tDIR="/software/ANTS-templates"
 # Logging
 cat <<EOF
 ##############################################################
-### Cerebellar Parcellation Pipeline                       ###
+### CVET - Cerebellar Volume Extration Tool                ###
 ### PART 1: T1 Skull Stripping and Bias Field Correction   ###
 ### Start date and time: `date`      ###
 ### Subject: ${SID}                                     ###
@@ -143,13 +143,29 @@ fslmaths \
 # will result in problems with the bias field correction.
 # We are therefore going to copy over the affine matrix
 # from the original T1 to the brain masks to avoid this.
-fslcpgeom \
-    ${oDIR}/T1.nii.gz \
-    ${oDIR}/BrainExtractionMask.nii.gz
+python3 <<PY3
+# Libraries
+import nibabel as nb
 
-fslcpgeom \
-    ${oDIR}/T1.nii.gz \
-    ${oDIR}/BrainExtractionMask_dilM2.nii.gz
+# Environment
+DIR=${oDIR}
+
+# Load data
+T1=nb.load(DIR+'T1.nii.gz')
+MSK1=nb.load(DIR+'BrainExtractionMask.nii.gz')
+MSK2=nb.load(DIR+'BrainExtractionMask_dilM2.nii.gz')
+
+# Copy over sform and qform
+MSK1.set_sform(T1.get_sform())
+MSK1.set_qform(T1.get_qform())
+MSK2.set_sform(T1.get_sform())
+MSK2.set_qform(T1.get_qform())
+
+# Save data
+nb.save(MSK1, DIR+'BrainExtractionMask.nii.gz')
+nb.save(MSK2, DIR+'BrainExtractionMask_dilM2.nii.gz')
+
+PY3
 
 # Note: adding a mask forces the N4 application within the mask
 # We want to do the estimation within the mask, but the application
