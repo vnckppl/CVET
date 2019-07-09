@@ -40,7 +40,7 @@ tDIR="/software/SUIT-templates"
 # Logging
 cat <<EOF
 ##############################################################
-### Cerebellar Parcellation Pipeline                       ###
+### Cerebellar Volume Extraction Tool (CVET)               ###
 ### PART 5: Apply Warps and Obtain Cerebellar Volumes      ###
 ### Start date and time: `date`      ###
 ### Subject: ${SID}                                     ###
@@ -65,9 +65,9 @@ cat <<EOF
 EOF
 
 # Warp atlas back to native space
-# If thereis more than one session, there is an additional rigid transformation
+# If there is more than one session, there is an additional rigid transformation
 # from subject+session space to subject template space
-CLIST=( $(find ${iDIR2} -iname "mc_roN4_T1_*.nii.gz" | sort) )
+CLIST=( $(find ${iDIR2}/.. -iname "mc_roN4_T1_*.nii.gz" | sort) )
 if [ ${#CLIST[@]} -gt 1 ]; then
     twarp=$(echo -t [$(ls ${iDIR31}/T_mc_roN4_T1_*0GenericAffine.mat | grep ${SES}),1] )
 fi
