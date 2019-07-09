@@ -151,9 +151,9 @@ import nibabel as nb
 DIR='${oDIR}'
 
 # Load data
-T1=nb.load(DIR+'T1.nii.gz')
-MSK1=nb.load(DIR+'BrainExtractionMask.nii.gz')
-MSK2=nb.load(DIR+'BrainExtractionMask_dilM2.nii.gz')
+T1=nb.load(DIR+'/T1.nii.gz')
+MSK1=nb.load(DIR+'/BrainExtractionMask.nii.gz')
+MSK2=nb.load(DIR+'/BrainExtractionMask_dilM2.nii.gz')
 
 # Copy over sform and qform
 MSK1.set_sform(T1.get_sform())
@@ -162,8 +162,8 @@ MSK2.set_sform(T1.get_sform())
 MSK2.set_qform(T1.get_qform())
 
 # Save data
-nb.save(MSK1, DIR+'BrainExtractionMask.nii.gz')
-nb.save(MSK2, DIR+'BrainExtractionMask_dilM2.nii.gz')
+nb.save(MSK1, DIR+'/BrainExtractionMask.nii.gz')
+nb.save(MSK2, DIR+'/BrainExtractionMask_dilM2.nii.gz')
 
 PY3
 
