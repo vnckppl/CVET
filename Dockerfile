@@ -169,8 +169,10 @@ ENV \
 ###############
 ### Scripts ###
 ###############
-RUN  apt-get install -y python3 python3-pip && \
-        pip3 install nibabel
+RUN  apt-get install -y libglu1-mesa python3
+
+#        pip3 install nibabel  python3 python3-pip 
+
 
 ### Copy over scripts
 ADD \

@@ -37,22 +37,19 @@ if __name__ == "__main__":
                         'provided all subjects should be analyzed. Multiple '
                         'participants can be specified with a space separated list.',
                         nargs="+")
-    parser.add_argument('--freesurfer_run',
-                        action='store_true',
-                        help='Run FreeSurfer and use the cerebellum labels for '
-                        'refinement of the cerebellum mask. If you already have '
-                        'run your data through FreeSurfer, use the --freesurfer_dir '
-                        'instead.')
-    parser.add_argument('--freesurfer_dir',
-                        dest='FSdataDir',
-                        help="Folder with FreeSurfer subjects formatted according "
-                        "to BIDS standard. If subject's recon-all folder "
-                        "cannot be found, recon-all will be run. If not "
-                        "specified freesurfer data will be saved to "
-                        "{out_dir}/freesurfer")
-    parser.add_argument('-a','--average',
+    parser.add_argument('--freesurfer',
+                        help="If you have already processed your data using FreeSurfer "
+                        "set this flag to 1 to use this data as input. This will "
+                        "omit reprocessing the data and save you some time. Make "
+                        "sure that if you have longitudinal data that you used "
+                        "FreeSurfer's longitudinal pipeline. Also, make sure to mount "
+                        "your FreeSurfer subject folder to /freesurfer with docker.",
+                        choices=[0,1],
+                        default=0,
+                        type=int)
+    parser.add_argument('--average',
                         help='Select 1 to create an average from multiple T1-weighted '
-                        'images if more than one T1-weighted image was ' 
+                        'images if more than one T1-weighted image was '
                         'collected per session. The default (0) is to not '
                         'average T1-weighted images, but to take the first '
                         'T1-weighted image collected during a session. If '
@@ -79,18 +76,24 @@ if __name__ == "__main__":
     
     # Parse arguments
     # FreeSurfer
-    # If '--freesurfer_dir' has been set, check if there is any
-    # data in that folder.
-    files = glob(args.FSdataDir+'/sub-*')
-    if len(files) < 1:
-        print('No subject data found in the folder that '
-              'was specified as the FreeSurfer data folder.')
-        sys.exit(1)
-    elif len(files) > 0:
-        # Forward option to shell script
-        FSOPT=2
+    # If '--freesurfer' has been set to 1, check
+    # if there is any data in that folder.
+    if args.freesurfer == 1:
     
-    if args.freesurfer_run == True:
+        files = glob('/freesurfer/sub-*')
+        if len(files) < 1:
+            print('No subject data found in the folder that '
+                  'was specified as the FreeSurfer data folder.'
+                  'Check that you mounted the correct freesurfer '
+                  'dat folder with docker to /freesurfer and that '
+                  'this folder contains all BIDS formatted subject '
+                  'folders (e.g., sub-001).')
+            sys.exit(1)
+        elif len(files) > 0:
+            # Forward option to shell script
+            FSOPT=0
+    
+    if args.freesurfer == 0:
         FSOPT=1
     
     
@@ -175,67 +178,45 @@ if __name__ == "__main__":
         
         
         
-        # 01 T1 Bias Field Correction
-        # Loop over sessions
-        for SES in SESLIST:
-            
+        # 01 FreeSurfer
+        # Only run FreeSurfer if no FreeSurfer folder was mounted
+        if FSOPT==1:
             # Announce
-            print('               +----------> Bias Field Correction -- Session '+SES)
+            print('               +----------> Run FreeSurfer')
             
             # Define log file
-            logFolder='/data/out/01_SSN4/sub-'+SID+'/ses-'+SES
+            logFolder='/data/out/01_FreeSurfer'
             os.makedirs(logFolder)
-            log=logFolder+'/sub-'+SID+'_ses-'+SES+'_log-01-SSN4.txt'
+            log=logFolder+'/sub-'+SID+'_log-01-FS.txt'
             
             # Arguments
-            script=scriptsDir+'/01_SSN4.sh'
-            arguments=[script, '-s', SID, '-t', SES, '-a', str(args.average), '-i', str(args.intermediate_files)]
+            script=scriptsDir+'/01_FS.sh'
+            arguments=[script, '-s', SID, '-a', str(args.average), '-c', str(args.n_cpus), '-i', str(args.intermediate_files)]
             
             # Start script
             run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
         
         
         
-        # 02 Cerebellum + Brain Stem Isolation
-        # Loop over sessions
-        for SES in SESLIST:
-            
-            # Announce
-            print('               +----------> Cerebellar Isolation  -- Session '+SES)
-            
-            # Define log file
-            logFolder='/data/out/02_CerIso/sub-'+SID+'/ses-'+SES
-            os.makedirs(logFolder)
-            log=logFolder+'/sub-'+SID+'_ses-'+SES+'_log-02-CerIso.txt'
-            
-            # Arguments
-            script=scriptsDir+'/02_CerIso.sh'
-            arguments=[script, '-s', SID, '-t', SES, '-i', str(args.intermediate_files)]
-            
-            # Start script
-            run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
-        
-        
-        
-        # 03 Subject Template Creation and Normalization to SUIT Space
+        # 02 Subject Template Creation and Normalization to SUIT Space
         # Announce
         print('               +----------> Build Subject Template and Normalize to SUIT')
         
         # Define log file
-        logFolder='/data/out/03_Template/sub-'+SID
+        logFolder='/data/out/02_Template/sub-'+SID
         os.makedirs(logFolder)
-        log=logFolder+'/sub-'+SID+'_log-03-Template.txt'
+        log=logFolder+'/sub-'+SID+'_log-02-Template.txt'
         
         # Arguments
-        script=scriptsDir+'/03_MkTmplt.sh'
-        arguments=[script, '-s', SID, '-n', str(SESN), '-c', str(args.n_cpus), '-i', str(args.intermediate_files)]
+        script=scriptsDir+'/02_MkTmplt.sh'
+        arguments=[script, '-s', SID, '-n', str(SESN), '-f', str(FSOPT), '-c', str(args.n_cpus), '-i', str(args.intermediate_files)]
         
         # Start script
         run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
         
         
         
-        # 04 Segment the whole brain images using SPM12
+        # 03 Segment the whole brain images using SPM12
         # Loop over sessions
         for SES in SESLIST:
             
@@ -243,20 +224,20 @@ if __name__ == "__main__":
             print('               +----------> Tissue Segmentation   -- Session '+SES)
             
             # Define log file
-            logFolder='/data/out/04_Segment/sub-'+SID+'/ses-'+SES
+            logFolder='/data/out/03_Segment/sub-'+SID+'/ses-'+SES
             os.makedirs(logFolder)
-            log=logFolder+'/sub-'+SID+'_ses-'+SES+'_log-04-Segment.txt'
+            log=logFolder+'/sub-'+SID+'_ses-'+SES+'_log-03-Segment.txt'
             
             # Arguments
-            script=scriptsDir+'/04_Segment.sh'
-            arguments=[script, '-s', SID, '-t', SES, '-i', str(args.intermediate_files)]
+            script=scriptsDir+'/03_Segment.sh'
+            arguments=[script, '-s', SID, '-t', SES, '-f', str(FSOPT), '-i', str(args.intermediate_files)]
             
             # Start script
             run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
         
         
         
-        # 05 Extact volumes and create modulated warped GM maps
+        # 04 Extract volumes and create modulated warped GM maps
         # Loop over sessions
         for SES in SESLIST:
             
@@ -264,37 +245,13 @@ if __name__ == "__main__":
             print('               +----------> Volume Extraction     -- Session '+SES)
             
             # Define log file
-            logFolder='/data/out/05_ApplyWarp/sub-'+SID+'/ses-'+SES
+            logFolder='/data/out/04_ApplyWarp/sub-'+SID+'/ses-'+SES
             os.makedirs(logFolder)
-            log=logFolder+'/sub-'+SID+'_ses-'+SES+'_log-05-ApplyWarp.txt'
+            log=logFolder+'/sub-'+SID+'_ses-'+SES+'_log-04-ApplyWarp.txt'
             
             # Arguments
-            script=scriptsDir+'/05_ApplyWarp.sh'
-            arguments=[script, '-s', SID, '-t', SES, '-i', str(args.intermediate_files)]
+            script=scriptsDir+'/04_ApplyWarp.sh'
+            arguments=[script, '-s', SID, '-t', SES, '-f', str(FSOPT), '-i', str(args.intermediate_files)]
             
             # Start script
             run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
-        
-        
-        
-        # 06 Refine the cerebellar labels with a Extact volumes and create modulated warped GM maps
-        # If the user selected to apply FreeSurfer:
-        if (FSOPT == 1) or (FSOPT == 2):
-            
-            for SES in SESLIST:
-                
-                # Announce
-                print('               +----------> Volume Refinement     -- Session '+SES)
-                
-                # Define log file
-                logFolder='/data/out/06_RefineFS/sub-'+SID+'/ses-'+SES
-                os.makedirs(logFolder)
-                log=logFolder+'/sub-'+SID+'_ses-'+SES+'_log-06-RefineFS.txt'
-                
-                # Arguments
-                script=scriptsDir+'/06_RefineFS.sh'
-                arguments=[script, '-s', SID, '-t', SES, '-i', str(args.intermediate_files), '-f', str(FSOPT)]
-                
-                # Start script
-                run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
-

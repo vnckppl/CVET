@@ -4,7 +4,7 @@
 # calcualtes the warp from this template to SUIT space.
 
 # Input arguments
-while getopts "s:n:c:i:r:" OPTION
+while getopts "s:n:f:c:i:r:" OPTION
 do
      case $OPTION in
          s)
@@ -12,6 +12,9 @@ do
              ;;
          n)
              SESN=$OPTARG
+             ;;
+         f)
+             FSDATA=$OPTARG
              ;;
          c)
              CPUS=$OPTARG
@@ -28,21 +31,13 @@ do
      esac
 done
 
-# Environment
-iDIR=/data/out/02_CerIso/sub-${SID}
-oDIR=/data/out/03_Template/sub-${SID}
-oDIRt=${oDIR}/01_SubjectTemplate
-oDIRs=${oDIR}/02_SUITTemplate
-mkdir -p ${oDIRt} ${oDIRs}
-tDIR="/sofware/ANTS-templates"
-
 
 
 # Logging
 cat <<EOF
 ##############################################################
 ### CVET - Cerebellar Volume Extration Tool                ###
-### PART 3: Subject Template Creation and Warping to SUIT  ###
+### PART 2: Subject Template Creation and Warping to SUIT  ###
 ### Start date and time: `date`      ###
 ### Subject: ${SID}                                     ###
 ### Number of sessions included in the template: ${SESN}         ###
@@ -50,11 +45,114 @@ cat <<EOF
 
 EOF
 
+# Environment
+oDIR=/data/out/02_Template/sub-${SID}
+oDIRt=${oDIR}/02_SubjectTemplate
+oDIRs=${oDIR}/03_SUITTemplate
+mkdir -p ${oDIRt} ${oDIRs}
+tDIR="/sofware/ANTS-templates"
+
+# Set FreeSurfer data location
+if [ ${FSDATA} -eq 0 ]; then
+    FSDATADIR=/freesurfer
+elif [${FSDATA} -eq 1 ]; then
+    FSDATADIR=/data/out/01_FreeSurfer
+fi
+
+
+
+# Create a cerebellar mask from FreeSurfer's labels.
+cat <<EOF
+##############################################################
+### Create a cerebellar mask from the 4 FreeSurfer         ###
+### cerebellar labels (L+R * GM+WM labels)                 ###
+##############################################################
+
+EOF
+
+# Extract session list
+SESLIST=(
+    $(ls ${FSDATADIR} \
+          | grep ${SID} \
+          | grep ses- \
+          | grep -v long \
+          | sed "s/sub-${SID}_ses-//g"
+    )
+)
+
+# Loop over sessions
+for SES in ${SESLIST[@]}; do
+
+    # Set output folder
+    oDIRm=${oDIR}/01_CerebellumMask/ses-${SES}
+    mkdir -p ${oDIRm}
+    
+    # Figure out which FS folder to use. Search for subject and
+    # session; then for a longitudinal folder. If that is not
+    # present, then look for a cross-sectional folder.
+    FSSUBDIR=$(ls ${FSDATADIR} | grep ${SID} | grep ${SES} | grep long)
+    FSDIR="${FSDATADIR}/${FSSUBDIR}"
+    if [ ! -d ${FSDATADIR} ]; then
+        FSSUBDIR=$(ls ${FSDATADIR} | grep ${SID} | grep ${SES})
+        FSDIR="${FSDATADIR}/${FSSUBDIR}"
+    fi
+    if [ ! -d ${FSDIR} ]; then
+        echo "No FreeSurfer folder for Subject ${SID}, Session ${SES} found. Exit."
+        exit 1
+    fi
+
+    # Convert files from FreeSurfer's mgh to Nifti format
+    mri_convert \
+        ${FSDIR}/mri/aseg.mgz \
+        ${oDIRm}/aseg.nii.gz
+
+    mri_convert \
+        ${FSDIR}/mri/T1.mgz \
+        ${oDIRm}/T1.nii.gz
+
+    # Create cerebellum mask from FreeSurfer labels
+    ROIn=(7 8 46 47)                              # Lables numbers
+    ROIl=("LcWM" "LcGM" "RcWM" "RcGM")            # Labels
+    ROIi=( $(seq -w 0 $(( ${#ROIn[@]} - 1 )) ) )  # Index list
+    for R in ${ROIi[@]}; do
+
+        fslmaths \
+            ${oDIRm}/aseg.nii.gz \
+            -thr ${ROIn[${R}]} \
+            -uthr ${ROIn[${R}]} \
+            ${oDIRm}/${ROIl[${R}]}.nii.gz
+
+    done
+
+    fslmaths \
+        ${oDIRm}/LcWM.nii.gz \
+        -add ${oDIRm}/LcGM.nii.gz \
+        -add ${oDIRm}/RcWM.nii.gz \
+        -add ${oDIRm}/RcGM.nii.gz \
+        -bin \
+        ${oDIRm}/cerebellumMask.nii.gz
+
+    # Apply mask
+    fslmaths \
+        ${oDIRm}/T1.nii.gz \
+        -mas ${oDIRm}/cerebellumMask.nii.gz \
+        ${oDIRm}/sub-${SID}_ses-${SES}_cereb.nii.gz
+
+    # Crop
+    fslroi \
+        ${oDIRm}/sub-${SID}_ses-${SES}_cereb.nii.gz \
+        ${oDIRm}/sub-${SID}_ses-${SES}_ccereb.nii.gz \
+        $(fslstats ${oDIRm}/sub-${SID}_ses-${SES}_cereb.nii.gz -w)
+    
+done
+
 
 
 # Build subject specific cerebellar template with ANTs.
 # Only do this if there is more than a single time point.
 cat <<EOF
+
+
 ##############################################################
 ### Build subject specific cerebellar template, if there   ###
 ### is more than a single time point.                      ###
@@ -62,8 +160,8 @@ cat <<EOF
 
 EOF
 
-# Check for which time points cropped cerebelli are available
-CLIST=( $(find ${iDIR} -iname "mc_roN4_T1_*.nii.gz" | sort) )
+# Check for which time points cerebelli are available
+CLIST=( $(find ${oDIR} -iname "sub-${SID}_ses-*_ccereb.nii.gz" | sort) )
 
 # If there are more than two time points, create a template.
 if [ ${#CLIST[@]} -gt 1 ]; then
@@ -81,8 +179,8 @@ if [ ${#CLIST[@]} -gt 1 ]; then
     I=4            # Iteration limit (default=4)
     Q=25x15x10x5   # Iterations (default=100x100x70x20)
     G=0.25         # Gradient step size (smaller=better+slower; default=0.25)
-    F=8x4x2x1      # Shrink factor (default=6x4x2x1)
-    S=4x2x1x0      # Smoothing factor (default=3x2x1x0)
+    F=6x4x2x1      # Shrink factor (default=6x4x2x1)
+    S=3x2x1x0      # Smoothing factor (default=3x2x1x0)
 
 
     # Goto output folder
@@ -137,10 +235,10 @@ SUIT_Template=/software/SUIT-templates/SUIT.nii.gz
 Subject_Template=${oDIRt}/T_template0.nii.gz
 
 # If there is only one time point, there is no template.
-# In this case, select the single maskes cerebellum as
+# In this case, select the single masked cerebellum as
 # the input file for warping to SUIT space.
 if [ ${#CLIST[@]} -eq 1 ]; then
-    Subject_Template=${CLIST}
+    Subject_Template=${CLIST[0]}
 fi
 
 # Calculate warp
@@ -172,3 +270,4 @@ antsRegistration  \
    -v 1
    
 exit
+
