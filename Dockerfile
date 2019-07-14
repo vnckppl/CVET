@@ -173,6 +173,14 @@ RUN  apt-get install -y libglu1-mesa python3
 
 #        pip3 install nibabel  python3 python3-pip 
 
+RUN apt-get install -y git wget tcsh build-essential gfortran
+
+RUN apt-get install -y libblas-dev liblapack-dev zlib1g-dev
+
+RUN apt-get install -y libxmu-dev libxmu-headers libxi-dev libxt-dev libx11-dev
+
+#        libglu1-mesa-dev
+
 
 ### Copy over scripts
 ADD \

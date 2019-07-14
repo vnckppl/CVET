@@ -191,7 +191,12 @@ if __name__ == "__main__":
             
             # Arguments
             script=scriptsDir+'/01_FS.sh'
-            arguments=[script, '-s', SID, '-a', str(args.average), '-c', str(args.n_cpus), '-i', str(args.intermediate_files)]
+            arguments=[script,
+                       '-s', SID,
+                       '-a', str(args.average),
+                       '-c', str(args.n_cpus),
+                       '-i', str(args.intermediate_files)
+            ]
             
             # Start script
             run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
@@ -209,7 +214,13 @@ if __name__ == "__main__":
         
         # Arguments
         script=scriptsDir+'/02_MkTmplt.sh'
-        arguments=[script, '-s', SID, '-n', str(SESN), '-f', str(FSOPT), '-c', str(args.n_cpus), '-i', str(args.intermediate_files)]
+        arguments=[script,
+                   '-s', SID,
+                   '-n', str(SESN),
+                   '-f', str(FSOPT),
+                   '-c', str(args.n_cpus),
+                   '-i', str(args.intermediate_files)
+        ]
         
         # Start script
         run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
@@ -230,7 +241,13 @@ if __name__ == "__main__":
             
             # Arguments
             script=scriptsDir+'/03_Segment.sh'
-            arguments=[script, '-s', SID, '-t', SES, '-f', str(FSOPT), '-i', str(args.intermediate_files)]
+            arguments=[script,
+                       '-s', SID,
+                       '-t', SES,
+                       '-n', str(SESN),
+                       '-f', str(FSOPT),
+                       '-i', str(args.intermediate_files)
+            ]
             
             # Start script
             run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
@@ -251,7 +268,13 @@ if __name__ == "__main__":
             
             # Arguments
             script=scriptsDir+'/04_ApplyWarp.sh'
-            arguments=[script, '-s', SID, '-t', SES, '-f', str(FSOPT), '-i', str(args.intermediate_files)]
+            arguments=[script,
+                       '-s', SID,
+                       '-t', SES,
+                       '-n', str(SESN),
+                       '-f', str(FSOPT),
+                       '-i', str(args.intermediate_files)
+            ]
             
             # Start script
             run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})

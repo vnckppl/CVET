@@ -90,12 +90,17 @@ for SES in ${SESLIST[@]}; do
     # Figure out which FS folder to use. Search for subject and
     # session; then for a longitudinal folder. If that is not
     # present, then look for a cross-sectional folder.
-    FSSUBDIR=$(ls ${FSDATADIR} | grep ${SID} | grep ${SES} | grep long)
-    FSDIR="${FSDATADIR}/${FSSUBDIR}"
-    if [ ! -d ${FSDATADIR} ]; then
-        FSSUBDIR=$(ls ${FSDATADIR} | grep ${SID} | grep ${SES})
+    if [ ${SESN} -gt 1 ]; then
+        FSSUBDIR=$(ls ${FSDATADIR} | grep ${SID} | grep ${SES} | grep long)
         FSDIR="${FSDATADIR}/${FSSUBDIR}"
-    fi
+        if [ ! -d ${FSDATADIR} ]; then
+            FSSUBDIR=$(ls ${FSDATADIR} | grep ${SID} | grep ${SES})
+            FSDIR="${FSDATADIR}/${FSSUBDIR}"
+        fi
+    elif [ ${SESN} -eq 1 ]; then
+        FSSUBDIR=$(ls ${FSDATADIR} | grep ${SID} | grep ${SES} | grep -v long)
+        FSDIR="${FSDATADIR}/${FSSUBDIR}"               
+    fi                  
     if [ ! -d ${FSDIR} ]; then
         echo "No FreeSurfer folder for Subject ${SID}, Session ${SES} found. Exit."
         exit 1
