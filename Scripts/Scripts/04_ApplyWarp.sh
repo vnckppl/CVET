@@ -203,23 +203,31 @@ fslmaths \
     ${iDIR3}/c1sub-${SID}_ses-${SES}_rawavg_N4.nii.gz \
     -mas ${cerebMask} \
     ${oDIR}/cgm.nii.gz
-    
+
+
+# Refine atlas by masking with FreeSufer cerebellar mask
+fslmaths \
+    ${oDIR}/atlasNativeSpace.nii.gz \
+    -mas ${cerebMask} \
+    ${oDIR}/c_atlasNativeSpace.nii.gz
+
+
 
 # Extract volume per lobule for all regions
 echo "Extract volume per lobule for all regions"
 listOfLobules=$(fslstats \
-	            -K ${oDIR}/atlasNativeSpace.nii.gz \
-	            ${oDIR}/atlasNativeSpace.nii.gz \
+	            -K ${oDIR}/c_atlasNativeSpace.nii.gz \
+	            ${oDIR}/c_atlasNativeSpace.nii.gz \
 	            -M )
 
 listMeanVal=$(fslstats \
-	          -K ${oDIR}/atlasNativeSpace.nii.gz \
+	          -K ${oDIR}/c_atlasNativeSpace.nii.gz \
 	          ${oDIR}/cgm.nii.gz \
 	          -m | sed 's/  */,/g' | sed 's/.,$//g' )
 
 listNumVox=$(fslstats \
-	         -K ${oDIR}/atlasNativeSpace.nii.gz \
-	         ${oDIR}/atlasNativeSpace.nii.gz \
+	         -K ${oDIR}/c_atlasNativeSpace.nii.gz \
+	         ${oDIR}/c_atlasNativeSpace.nii.gz \
 	         -v | awk '{ for (i=1;i<=NF;i+=2) print $i }' \
 	         | tr "\n" "," | sed 's/,$//g')
 
@@ -241,9 +249,12 @@ H2=$(for i in $(echo "${listOfLobules}" | sed 's/\.000000//g'); do
 	 fi
      done | sed 's/,$//g')
 
+# Get FreeSurfer's estimated total ICV
+eTIV=$(cat ${FSDIR}/stats/aseg.stats | grep EstimatedTotalIntraCranialVol | awk '{ print $(NF-1) }')
+
 # Write out Header and Data
-echo SUB,SES,${H1},${H2},mICVSPM,vICVSPM | sed 's/  *//g' > ${oFile}
-echo ${SID},${SES},${listMeanVal},${listNumVox},${ICVm},${ICVv} | sed 's/  *//g' >> ${oFile}
+echo SUB,SES,${H1},${H2},mICVSPM,vICVSPM,eTIV | sed 's/  *//g' > ${oFile}
+echo ${SID},${SES},${listMeanVal},${listNumVox},${ICVm},${ICVv},${eTIV} | sed 's/  *//g' >> ${oFile}
 
 
 
@@ -307,6 +318,25 @@ fslmaths \
     -mas ${tDIR}/maskSUIT.nii.gz \
     -s 1.70 \
     ${oDIR}/s8mwcgm.nii.gz
+
+
+
+# Clean up intermediate files
+if [ ${INTERMEDIATE} -eq 0 ]; then
+
+    # Announce
+    echo "REMOVING INTERMEDIATE FILES..."
+
+    rm -vf \
+       ${oDIR}/Jacobian.nii.gz \
+       ${oDIR}/atlasNativeSpace.nii.gz \
+       ${oDIR}/mwcgm.nii.gz \
+       ${oDIR}/wcgm.nii.gz
+
+    trans=${oDIR}/sub-${SUB}_ses-${SES}_to_sub-${SUB}_ses-${SES}.long.sub-${SUB}.txt
+    if [ -vf ${trans} ]; then rm -f ${trans}; fi
+    
+fi
 
 exit
 
