@@ -334,7 +334,7 @@ if [ ${INTERMEDIATE} -eq 0 ]; then
        ${oDIR}/wcgm.nii.gz
 
     trans=${oDIR}/sub-${SUB}_ses-${SES}_to_sub-${SUB}_ses-${SES}.long.sub-${SUB}.txt
-    if [ -vf ${trans} ]; then rm -f ${trans}; fi
+    if [ -f ${trans} ]; then rm -vf ${trans}; fi
     
 fi
 
