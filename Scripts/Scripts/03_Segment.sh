@@ -53,7 +53,7 @@ mkdir -p ${oDIR}
 # Set FreeSurfer data location
 if [ ${FSDATA} -eq 0 ]; then
     FSDATADIR=/freesurfer
-elif [${FSDATA} -eq 1 ]; then
+elif [ ${FSDATA} -eq 1 ]; then
     FSDATADIR=/data/out/01_FreeSurfer
 fi
 
