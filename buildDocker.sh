@@ -8,7 +8,7 @@ cd ${DIR}
 
 docker \
     build \
-    -t vkoppelm/cvet:lhab_v1.0 \
+    -t vkoppelm/cvet:lhab_v1.1 \
     . \
     -f ${DIR}/Dockerfile \
     --cpuset-cpus 3
