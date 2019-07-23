@@ -118,7 +118,7 @@ EOF
 
 # Loop over sessions
 for SES in ${SESLIST[@]}; do
-#for SES in tp5; do
+
     # Announce
     echo "Working on ${SID}: ${SES} [FreeSurfer CrossSectional Processing]"
 
@@ -137,7 +137,7 @@ for SES in ${SESLIST[@]}; do
         -s sub-${SID}_ses-${SES}
     
 done
-exit
+
 # Only run the rest of this script if there is more than one time point.
 if [ ${#SESLIST[@]} -lt 2 ]; then
     echo \
@@ -162,13 +162,13 @@ EOF
 # Create list of input sessions
 TLIST=(
     $(for SES in ${SESLIST[@]}; do
-          echo ${SES} | sed "s/^/sub-${SID}_ses-/g"
+          echo "-tp $(echo "${SES} " | sed "s/^/sub-${SID}_ses-/g")"
       done
     )
 )
 
 # Run template creation
-recon-all -base ${SID} ${TLIST} -all -parallel -openmp ${CPUS}
+recon-all -base ${SID} ${TLIST[@]} -all -parallel -openmp ${CPUS}
 
 
 
@@ -192,7 +192,7 @@ for SES in ${SESLIST[@]}; do
     recon-all \
         -parallel \
         -openmp ${CPUS} \
-        -long  sub-${SID}_ses-${SES} \
+        -long sub-${SID}_ses-${SES} \
         ${SID} \
         -all
     
