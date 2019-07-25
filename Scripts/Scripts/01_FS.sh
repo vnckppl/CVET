@@ -168,7 +168,7 @@ TLIST=(
 )
 
 # Run template creation
-recon-all -base ${SID} ${TLIST[@]} -all -parallel -openmp ${CPUS}
+recon-all -base sub-${SID} ${TLIST[@]} -all -parallel -openmp ${CPUS}
 
 
 
@@ -193,7 +193,7 @@ for SES in ${SESLIST[@]}; do
         -parallel \
         -openmp ${CPUS} \
         -long sub-${SID}_ses-${SES} \
-        ${SID} \
+        sub-${SID} \
         -all
     
 done
