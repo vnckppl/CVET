@@ -186,7 +186,7 @@ if __name__ == "__main__":
             
             # Define log file
             logFolder='/data/out/01_FreeSurfer'
-            os.makedirs(logFolder)
+            os.makedirs(logFolder, exist_ok=True)
             log=logFolder+'/sub-'+SID+'_log-01-FS.txt'
             
             # Arguments
