@@ -11,6 +11,9 @@ from nipype.interfaces.freesurfer import MRIConvert
 import nibabel as nb
 import nilearn
 from nilearn import plotting
+import svgutils.compose as sc
+import numpy as np
+import re
 
 
 
@@ -26,6 +29,100 @@ if __name__ == "__main__":
 
 args = parser.parse_args()
 SID=args.SID
+
+# Function to compile two svg images into animations
+def compileSVG(DIR, svg1, svg2, outSVG):
+
+    # Open the top svg image and remove svg tag from text file
+    with open(svg2, 'r') as f:
+        lines = f.read().splitlines()
+        
+        # Everything but last line
+        myLines = lines[:-1]
+        
+        # Remove black background from image
+        # All lines between    <g id="patch_1">
+        #                      <g id="axes_2">
+        # Find line number of lines
+        for line in range(0, len(myLines)):
+            
+            # Test if a line contains the string ' <g id="patch_1">'
+            # If so, store this line number
+            regex=re.compile('  <g id="patch_1">')
+            if re.match(regex, myLines[line]):
+                start=line
+                
+            # Test if a line contains the string ' <g id="axes_2">'
+            # If so, store this line number
+            regex=re.compile('  <g id="axes_2">')
+            if re.match(regex, myLines[line]):
+                stop=line
+            
+        # Remove the lines between start and stop
+        myLines = myLines[:start] + myLines[stop:]
+            
+        # Extract image dimensions
+        regex=re.compile('<svg height')
+        matches=[string for string in myLines if re.match(regex, string)]
+        myParameters=str(matches).split(' ')
+        # Height
+        regex=re.compile('height')
+        height=[string for string in myParameters if re.match(regex, string)]
+        height=str(height).split('"')[1]
+        # Weight
+        regex=re.compile('width')
+        width=[string for string in myParameters if re.match(regex, string)]
+        width=str(width).split('"')[1]
+        
+        # Convert this list back to a string with new lines
+        myStringLines=""
+        for line in myLines:
+            myStringLines=myStringLines+str(line)+"\n"
+    
+    
+    # Open the top svg image and create an animations svg snippet for each png in the file
+    with open(svg2, 'r') as f:
+        # Create list from 'words' separated by a space
+        content = f.read()
+        myList=content.split(" ")
+        
+        # Find all image IDs
+        regex=re.compile('id="image')
+        matches=[string for string in myList if re.match(regex, string)]
+        matches
+        
+        # Create new strings with animation information in svg format
+        for match in matches:
+            
+            myString = f"""
+            
+            <animate href="#{match[4:]}
+                     attributeName="opacity"
+                     values="0;0;1;1;0" dur="5s"
+                     repeatCount="indefinite"
+                     />"
+            """
+            #print(myString)
+            
+            # Append string to svg image
+            myStringLines = myStringLines+myString
+            
+        # Add closing svg tag
+        myStringLines = myStringLines + '</svg>'
+            
+    # Save to file
+    tmpSVG=DIR+'/tmp.svg'
+    with open(tmpSVG, "w") as text_file:
+        text_file.write(str(myStringLines))
+        
+    # Combine images
+    sc.Figure(width, height,
+        sc.Panel(sc.SVG(svg1)),
+        sc.Panel(sc.SVG(tmpSVG))
+        ).save(outSVG)
+    
+    # Clean up
+    os.remove(tmpSVG)
 
 
 # Date for logging
@@ -182,8 +279,8 @@ print(message)
 
 # Set number of slices to display per plane
 nX=7
-nY=5
-nZ=5
+nY=6
+nZ=6
 
 # Loop over all sessions
 for SES in SESLIST:
@@ -228,34 +325,56 @@ for SES in SESLIST:
             output_file=oDIRc+'/T1_'+plane+'.svg'
         )
         
+        
         # Gray matter map
         print('--------------------------------------- Gray Matter map')
         GMimg=nb.load(oDIRc+'/gm.nii.gz')
         
-        plotting.plot_stat_map(
-            GMimg, 
-            bg_img=T1, 
-            display_mode=plane.lower(),
-            cut_coords= eval('cutpoints_'+plane+'_mm'),
-            threshold=0.05,
-            alpha=0.5,
-            output_file=oDIRc+'/GM_'+plane+'.svg'
-        )
+        for alpha in [0.0, 1.0]:
+            plotting.plot_stat_map(
+                GMimg, 
+                bg_img=T1, 
+                display_mode=plane.lower(),
+                cut_coords= eval('cutpoints_'+plane+'_mm'),
+                threshold=0.05,
+                alpha=1,
+                output_file=oDIRc+'/GM_'+plane+'_'+str(alpha)+'.svg'
+            )
+        
+        # Create GM animation
+        svg1=oDIRc+'/GM_'+plane+'_0.0.svg'
+        svg2=oDIRc+'/GM_'+plane+'_1.0.svg'
+        outSVG=oDIRc+'/GM_'+plane+'_a.svg'
+        compileSVG(oDIR, svg1, svg2, outSVG)
+        
+        # Clean up
+        os.remove(svg1)
+        os.remove(svg2)
+        
         
         # SUIT altas
         print('--------------------------------------- SUIT Atlas')
         atlas=nb.load(oDIRc+'/atlas.nii.gz')
         
-        for alpha in [0.0, 0.3, 0.7]:
+        for alpha in [0.0, 1.0]:
             plotting.plot_roi(
                 atlas, 
                 bg_img=T1, 
                 display_mode=plane.lower(),
                 cut_coords= eval('cutpoints_'+plane+'_mm'),
                 alpha=alpha,
-                output_file=oDIRc+'/SUIT_'+plane+'_'+str(alpha)+'_.svg'
+                output_file=oDIRc+'/SUIT_atlas_'+plane+'_'+str(alpha)+'.svg'
             )
-
+            
+        # Create GM animation
+        svg1=oDIRc+'/SUIT_atlas_'+plane+'_0.0.svg'
+        svg2=oDIRc+'/SUIT_atlas_'+plane+'_1.0.svg'
+        outSVG=oDIRc+'/SUIT_atlas_'+plane+'.svg'
+        compileSVG(oDIR, svg1, svg2, outSVG)
+        
+        # Clean up
+        os.remove(svg1)
+        os.remove(svg2)
 
 
 # Create overview of the subject template 
@@ -406,3 +525,4 @@ for SES in SESLIST:
             cmap='gray',
             output_file=oDIRc+'/Sub2SUIT_'+plane+'.svg'
         )
+   
