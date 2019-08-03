@@ -101,7 +101,7 @@ for SES in ${SESLIST[@]}; do
         FSSUBDIR=$(ls -p ${FSDATADIR} | grep \/ | sed 's/\///g' | grep ${SID} | grep ${SES} | grep -v long)
         FSDIR="${FSDATADIR}/${FSSUBDIR}"               
     fi
-    if [ ! -z ${FSDIR} ]; then
+    if [ -z ${FSDIR} ]; then
         echo "No FreeSurfer folder for Subject ${SID}, Session ${SES} found. Exit."
         exit 1
     fi
