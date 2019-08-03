@@ -278,3 +278,26 @@ if __name__ == "__main__":
             
             # Start script
             run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
+            
+            
+            
+        # 05 Create quality control HTML report
+        # Loop over sessions
+            
+        # Announce
+        print('               +----------> Quality Control HTML Report')
+        
+        # Define log file
+        logFolder='/data/out/05_Report/sub-'+SID
+        os.makedirs(logFolder)
+        log=logFolder+'/sub-'+SID+'_log-05-QC_Report.txt'
+        
+        # Arguments
+        script=scriptsDir+'/05_Report.py'
+        arguments=[script,
+                   '--SID', SID
+        ]
+            
+        # Start script
+        run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
+
