@@ -178,106 +178,106 @@ if __name__ == "__main__":
         
         
         
-        # # 01 FreeSurfer
-        # # Only run FreeSurfer if no FreeSurfer folder was mounted
-        # if FSOPT==1:
-        #     # Announce
-        #     print('               +----------> Run FreeSurfer')
+        # 01 FreeSurfer
+        # Only run FreeSurfer if no FreeSurfer folder was mounted
+        if FSOPT==1:
+            # Announce
+            print('               +----------> Run FreeSurfer')
             
-        #     # Define log file
-        #     logFolder='/data/out/01_FreeSurfer'
-        #     os.makedirs(logFolder, exist_ok=True)
-        #     log=logFolder+'/sub-'+SID+'_log-01-FS.txt'
+            # Define log file
+            logFolder='/data/out/01_FreeSurfer'
+            os.makedirs(logFolder, exist_ok=True)
+            log=logFolder+'/sub-'+SID+'_log-01-FS.txt'
             
-        #     # Arguments
-        #     script=scriptsDir+'/01_FS.sh'
-        #     arguments=[script,
-        #                '-s', SID,
-        #                '-a', str(args.average),
-        #                '-c', str(args.n_cpus),
-        #                '-i', str(args.intermediate_files)
-        #     ]
+            # Arguments
+            script=scriptsDir+'/01_FS.sh'
+            arguments=[script,
+                       '-s', SID,
+                       '-a', str(args.average),
+                       '-c', str(args.n_cpus),
+                       '-i', str(args.intermediate_files)
+            ]
             
-        #     # Start script
-        #     run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
+            # Start script
+            run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
         
         
         
-        # # 02 Subject Template Creation and Normalization to SUIT Space
-        # # Announce
-        # print('               +----------> Build Subject Template and Normalize to SUIT')
+        # 02 Subject Template Creation and Normalization to SUIT Space
+        # Announce
+        print('               +----------> Build Subject Template and Normalize to SUIT')
         
-        # # Define log file
-        # logFolder='/data/out/02_Template/sub-'+SID
-        # os.makedirs(logFolder)
-        # log=logFolder+'/sub-'+SID+'_log-02-Template.txt'
+        # Define log file
+        logFolder='/data/out/02_Template/sub-'+SID
+        os.makedirs(logFolder)
+        log=logFolder+'/sub-'+SID+'_log-02-Template.txt'
         
-        # # Arguments
-        # script=scriptsDir+'/02_MkTmplt.sh'
-        # arguments=[script,
-        #            '-s', SID,
-        #            '-n', str(SESN),
-        #            '-f', str(FSOPT),
-        #            '-c', str(args.n_cpus),
-        #            '-i', str(args.intermediate_files)
-        # ]
+        # Arguments
+        script=scriptsDir+'/02_MkTmplt.sh'
+        arguments=[script,
+                   '-s', SID,
+                   '-n', str(SESN),
+                   '-f', str(FSOPT),
+                   '-c', str(args.n_cpus),
+                   '-i', str(args.intermediate_files)
+        ]
         
-        # # Start script
-        # run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
+        # Start script
+        run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
         
         
         
-        # # 03 Segment the whole brain images using SPM12
-        # # Loop over sessions
-        # for SES in SESLIST:
+        # 03 Segment the whole brain images using SPM12
+        # Loop over sessions
+        for SES in SESLIST:
             
-        #     # Announce
-        #     print('               +----------> Tissue Segmentation   -- Session '+SES)
+            # Announce
+            print('               +----------> Tissue Segmentation   -- Session '+SES)
             
-        #     # Define log file
-        #     logFolder='/data/out/03_Segment/sub-'+SID+'/ses-'+SES
-        #     os.makedirs(logFolder)
-        #     log=logFolder+'/sub-'+SID+'_ses-'+SES+'_log-03-Segment.txt'
+            # Define log file
+            logFolder='/data/out/03_Segment/sub-'+SID+'/ses-'+SES
+            os.makedirs(logFolder)
+            log=logFolder+'/sub-'+SID+'_ses-'+SES+'_log-03-Segment.txt'
             
-        #     # Arguments
-        #     script=scriptsDir+'/03_Segment.sh'
-        #     arguments=[script,
-        #                '-s', SID,
-        #                '-t', SES,
-        #                '-n', str(SESN),
-        #                '-f', str(FSOPT),
-        #                '-i', str(args.intermediate_files)
-        #     ]
+            # Arguments
+            script=scriptsDir+'/03_Segment.sh'
+            arguments=[script,
+                       '-s', SID,
+                       '-t', SES,
+                       '-n', str(SESN),
+                       '-f', str(FSOPT),
+                       '-i', str(args.intermediate_files)
+            ]
             
-        #     # Start script
-        #     run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
+            # Start script
+            run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
         
         
         
-        # # 04 Extract volumes and create modulated warped GM maps
-        # # Loop over sessions
-        # for SES in SESLIST:
+        # 04 Extract volumes and create modulated warped GM maps
+        # Loop over sessions
+        for SES in SESLIST:
             
-        #     # Announce
-        #     print('               +----------> Volume Extraction     -- Session '+SES)
+            # Announce
+            print('               +----------> Volume Extraction     -- Session '+SES)
             
-        #     # Define log file
-        #     logFolder='/data/out/04_ApplyWarp/sub-'+SID+'/ses-'+SES
-        #     os.makedirs(logFolder)
-        #     log=logFolder+'/sub-'+SID+'_ses-'+SES+'_log-04-ApplyWarp.txt'
+            # Define log file
+            logFolder='/data/out/04_ApplyWarp/sub-'+SID+'/ses-'+SES
+            os.makedirs(logFolder)
+            log=logFolder+'/sub-'+SID+'_ses-'+SES+'_log-04-ApplyWarp.txt'
             
-        #     # Arguments
-        #     script=scriptsDir+'/04_ApplyWarp.sh'
-        #     arguments=[script,
-        #                '-s', SID,
-        #                '-t', SES,
-        #                '-n', str(SESN),
-        #                '-f', str(FSOPT),
-        #                '-i', str(args.intermediate_files)
-        #     ]
+            # Arguments
+            script=scriptsDir+'/04_ApplyWarp.sh'
+            arguments=[script,
+                       '-s', SID,
+                       '-t', SES,
+                       '-n', str(SESN),
+                       '-f', str(FSOPT),
+                       '-i', str(args.intermediate_files)
+            ]
             
-        #     # Start script
-        #     run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
+            # Start script
+            run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
             
             
             
