@@ -142,24 +142,23 @@ message = f"""
 print(message)
 
 # Environment
-# iDIR2='/data/out/02_Template/sub-'+SID
-# iDIR22=iDIR2+'/02_SubjectTemplate'
-# iDIR23=iDIR2+'/03_SUITTemplate'
-# iDIR3='/data/out/03_Segment/sub-'+SID
-# iDIR4='/data/out/04_ApplyWarp/sub-'+SID
-# oDIR='/data/out/05_Report/sub-'+SID
-# os.makedirs(oDIR, exist_ok=True)
-# tDIR='/software/SUIT-templates'
-
-
-iDIR2='/Users/vincent/Data/tmp/20190625_N4test/derivatives/CVET/02_Template/sub-'+SID
+iDIR2='/data/out/02_Template/sub-'+SID
 iDIR22=iDIR2+'/02_SubjectTemplate'
 iDIR23=iDIR2+'/03_SUITTemplate'
-iDIR3='/Users/vincent/Data/tmp/20190625_N4test/derivatives/CVET/03_Segment/sub-'+SID
-iDIR4='/Users/vincent/Data/tmp/20190625_N4test/derivatives/CVET/04_ApplyWarp/sub-'+SID
-oDIR='/Users/vincent/Data/tmp/20190625_N4test/derivatives/CVET/05_Report/sub-'+SID
+iDIR3='/data/out/03_Segment/sub-'+SID
+iDIR4='/data/out/04_ApplyWarp/sub-'+SID
+oDIR='/data/out/05_Report/sub-'+SID
 os.makedirs(oDIR, exist_ok=True)
-tDIR="/Users/vincent/Data/tmp/SPM12StandaloneWithSUIT/spm12/toolbox/suit/atlas"
+tDIR='/software/SUIT-templates'
+
+# iDIR2='/Users/vincent/Data/tmp/20190625_N4test/derivatives/CVET/02_Template/sub-'+SID
+# iDIR22=iDIR2+'/02_SubjectTemplate'
+# iDIR23=iDIR2+'/03_SUITTemplate'
+# iDIR3='/Users/vincent/Data/tmp/20190625_N4test/derivatives/CVET/03_Segment/sub-'+SID
+# iDIR4='/Users/vincent/Data/tmp/20190625_N4test/derivatives/CVET/04_ApplyWarp/sub-'+SID
+# oDIR='/Users/vincent/Data/tmp/20190625_N4test/derivatives/CVET/05_Report/sub-'+SID
+# os.makedirs(oDIR, exist_ok=True)
+# tDIR="/Users/vincent/Data/tmp/SPM12StandaloneWithSUIT/spm12/toolbox/suit/atlas"
 
 # List of sessions
 SESLIST=sorted(glob(iDIR4+'/*'))
@@ -276,17 +275,61 @@ message = f"""
 """
 print(message)
 
+# HTML Header
+html = f"""
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body, html {{
+          font-family: 'Open Sans', sans-serif;
+          padding: 3px;
+      }}
+      h1 {{
+          font-weight: 400;
+          font-size: 42px;
+          color: #414a52;
+      }}
+      h2 {{
+          margin: 0 0 20px 0;
+          font-weight: 400;
+          font-size: 30px;
+          color: #0871dc;
+      }}
+      .img {{
+          margin: 0px;
+          padding: 0%;
+          padding-bottom: -20px;
+          width: auto;
+          max-width: 100%
+      }}
+      .imgbox {{
+          resize: both;
+          overflow: auto;
+          margin-bottom: -20px;
+      }}
+    </style>
+    <title>CVET {SID}</title>
+  </head>
+  <body>
+    <h1><b>CVET Report for Subject {SID}</b></h1>
+"""
 
 # Set number of slices to display per plane
 nX=7
-nY=6
-nZ=6
+nY=7
+nZ=7
 
 # Loop over all sessions
 for SES in SESLIST:
 
     # Announce
     print('------------------- Working on session: '+SES)
+
+    # Export session name to HTML
+    html=html+f"""
+    <h1>Session: {SES}</h1>
+    """
     
     # Set output folder
     oDIRc=oDIR+'/ses-'+SES
@@ -337,14 +380,15 @@ for SES in SESLIST:
                 display_mode=plane.lower(),
                 cut_coords= eval('cutpoints_'+plane+'_mm'),
                 threshold=0.05,
-                alpha=1,
+                alpha=alpha,
+                dim=-1,
                 output_file=oDIRc+'/GM_'+plane+'_'+str(alpha)+'.svg'
             )
         
         # Create GM animation
         svg1=oDIRc+'/GM_'+plane+'_0.0.svg'
         svg2=oDIRc+'/GM_'+plane+'_1.0.svg'
-        outSVG=oDIRc+'/GM_'+plane+'_a.svg'
+        outSVG=oDIRc+'/GM_'+plane+'.svg'
         compileSVG(oDIR, svg1, svg2, outSVG)
         
         # Clean up
@@ -363,7 +407,7 @@ for SES in SESLIST:
                 display_mode=plane.lower(),
                 cut_coords= eval('cutpoints_'+plane+'_mm'),
                 alpha=alpha,
-                output_file=oDIRc+'/SUIT_atlas_'+plane+'_'+str(alpha)+'.svg'
+                output_file=oDIRc+'/SUIT_atlas_'+plane+'_'+str(alpha)+'.svg',
             )
             
         # Create GM animation
@@ -375,12 +419,48 @@ for SES in SESLIST:
         # Clean up
         os.remove(svg1)
         os.remove(svg2)
-
-
+        
+    # Add Screenshots to HTML: T1 images
+    html=html+f"""
+    <h2>T1 overview</h2>
+    <div class="imgbox">
+    """
+    for plane in ['X','Y','Z']:
+        html=html+f"""
+        <img class="img" src="./ses-{SES}/T1_{plane}.svg">
+        """
+    html=html+f"""
+    </div>
+    """
+    # Add Screenshots to HTML: GM overlay images
+    html=html+f"""
+    <h2>GM overlay</h2>
+    <div class="imgbox">
+    """
+    for plane in ['X','Y','Z']:
+        html=html+f"""
+        <img class="img" src="./ses-{SES}/GM_{plane}.svg">
+        """
+    html=html+f"""
+    </div>
+    """
+    # Add Screenshots to HTML: SUIT atlas overlay images
+    html=html+f"""
+    <h2>SUIT atlas parcellation</h2>
+    <div class="imgbox">
+    """
+    for plane in ['X','Y','Z']:
+        html=html+f"""
+        <img class="img" src="./ses-{SES}/SUIT_atlas_{plane}.svg">
+        """
+    html=html+f"""
+    </div>
+    """
+    
 # Create overview of the subject template 
 message = f"""
 ##############################################################
-### Create overview of the Suject Template                 ###
+### Create overview of the Subject Template                ###
 ##############################################################
 
 """
@@ -389,12 +469,23 @@ print(message)
 # Template creation (only if there is more than one time point)
 if len(SESLIST) > 1:
 
+    # Export to HTML
+    html=html+f"""
+    <h1>Subject Template</h1>
+    """
+    
     # Create output folder
     oDIRt=oDIR+'/template'
     os.makedirs(oDIRt, exist_ok=True)
     
+    # Reorient template image to standard space
+    reorient = fsl.Reorient2Std()
+    reorient.inputs.in_file = iDIR22+'/T_template0.nii.gz'
+    reorient.inputs.out_file = oDIRt+'/ro_T_template0.nii.gz'
+    ro = reorient.run()
+    
     # Get image dimensions of Subject Template image
-    ST=nb.load(iDIR22+'/T_template0.nii.gz')
+    ST=nb.load(oDIRt+'/ro_T_template0.nii.gz')
     
     # Calculate the cut points for the screenshots
     cut_distance_X=ST.shape[0] / (nX + 1)
@@ -412,12 +503,7 @@ if len(SESLIST) > 1:
     print(cutpoints_Y)
     print(cutpoints_Z)
     
-    # Convert these image coordinates to mm coordinates
-    
-    #<<< Hier zit een probleem met de affine matrix. Die zet voor de Y en Z planes de
-    #<<< coordinaten niet goed om van voxel naar RAS.
-    #<<< Eventueel een andere tool (FSL?) hiervoor gebruiken?
-    
+    # Convert these image coordinates to mm coordinates   
     cutpoints_X_mm = [nilearn.image.coord_transform(x, 0, 0, ST.affine)[0] for x in cutpoints_X]
     cutpoints_Y_mm = [nilearn.image.coord_transform(0, x, 0, ST.affine)[1] for x in cutpoints_Y]
     cutpoints_Z_mm = [nilearn.image.coord_transform(0, 0, x, ST.affine)[2] for x in cutpoints_Z]
@@ -440,6 +526,14 @@ if len(SESLIST) > 1:
         # Announce
         print('--------------------------------------- Template: '+str(myFname[i]))
         
+        # Export to HTML
+        TP=str(myFname[i])
+        if i > 0:
+            html=html+f"""
+            <h2>Session {TP} to Subject Template</h2>
+            <div class="imgbox">
+            """
+        
         # Create screenshots
         for plane in ['X','Y','Z']:
             
@@ -455,9 +549,31 @@ if len(SESLIST) > 1:
                 display_mode=plane.lower(),
                 cut_coords= eval('cutpoints_'+plane+'_mm'),
                 cmap='gray',
-                output_file=oDIRt+'/T_'+str(myFname[i])+'_'+plane+'.svg'
+                output_file=oDIRt+'/T_'+str(myFname[i])+'_'+plane+'.svg',
+                title='Session: '+myFname[i]+'                '
             )
             
+            # Create animations
+            if i > 0:
+                
+                # Combine images
+                svg1=oDIRt+'/T_Template_'+plane+'.svg'
+                svg2=oDIRt+'/T_'+str(myFname[i])+'_'+plane+'.svg'
+                outSVG=oDIRt+'/T_'+str(myFname[i])+'_'+plane+'.svg'
+                compileSVG(oDIR, svg1, svg2, outSVG)
+                
+                # Clean up
+                #os.remove(svg2)
+                
+        # Export to HTML
+        if i > 0:
+            for plane in ['X','Y','Z']:
+                html=html+f"""
+                <img class="img" src="./template/T_{TP}_{plane}.svg">
+                """
+            html=html+f"""
+            </div>
+            """
 else:
     print("Single session, no subject template was created")
 
@@ -471,11 +587,21 @@ message = f"""
 """
 print(message)
 
+# Export to HTML
+html=html+f"""
+<h1>Normalization from Subject Session Space via Subject Template Space to SUIT Space</h1>
+"""
+
 # Loop over all sessions
 for SES in SESLIST:
 
     # Announce
     print('------------------- Working on session: '+SES)
+
+    # Export to HTML
+    html=html+f"""
+    <h2>Session: {SES}</h2>
+    """
     
     # Set output folder
     oDIRc=oDIR+'/ses-'+SES
@@ -497,7 +623,7 @@ for SES in SESLIST:
     cutpoints_X_mm = [nilearn.image.coord_transform(x, 0, 0, SUIT.affine)[0] for x in cutpoints_X]
     cutpoints_Y_mm = [nilearn.image.coord_transform(0, x, 0, SUIT.affine)[1] for x in cutpoints_Y]
     cutpoints_Z_mm = [nilearn.image.coord_transform(0, 0, x, SUIT.affine)[2] for x in cutpoints_Z]
-    
+
     # Create screenshots
     for plane in ['X','Y','Z']:
         
@@ -511,7 +637,8 @@ for SES in SESLIST:
             display_mode=plane.lower(),
             cut_coords= eval('cutpoints_'+plane+'_mm'),
             cmap='gray',
-            output_file=oDIRc+'/SUIT_'+plane+'.svg'
+            output_file=oDIRc+'/SUIT_'+plane+'.svg',
+            title='SUIT Template'
         )
         
         # Subject Template normalized to SUIT space
@@ -523,6 +650,37 @@ for SES in SESLIST:
             display_mode=plane.lower(),
             cut_coords= eval('cutpoints_'+plane+'_mm'),
             cmap='gray',
-            output_file=oDIRc+'/Sub2SUIT_'+plane+'.svg'
+            output_file=oDIRc+'/Sub2SUIT_'+plane+'.svg',
+            title='Subject warped to SUIT Template'
         )
-   
+        
+        # Create animations
+        svg1=oDIRc+'/SUIT_'+plane+'.svg'
+        svg2=oDIRc+'/Sub2SUIT_'+plane+'.svg'
+        outSVG=oDIRc+'/Sub2SUIT_'+plane+'_a.svg'
+        compileSVG(oDIR, svg1, svg2, outSVG)
+        
+        # Clean up
+        os.remove(svg1)
+        os.remove(svg2)
+
+
+    # Export to HTML
+    for plane in ['X','Y','Z']:
+        html=html+f"""
+        <img class="img" src="./ses-{SES}/Sub2SUIT_{plane}_a.svg">
+        """
+    html=html+f"""
+    </div>
+    """
+
+# Close html
+html=html+f"""
+  </body>
+</html>
+"""
+
+# Write out html
+webpage = open(oDIR+"/CVET_sub-"+SID+".html", "w")
+webpage.write("%s" % html)
+webpage.close()
