@@ -607,7 +607,7 @@ for SES in SESLIST:
     oDIRc=oDIR+'/ses-'+SES
     
     # Get image dimensions of T1 image
-    SUIT=nb.load(tDIR+'/SUIT.nii')
+    SUIT=nb.load(tDIR+'/SUIT.nii.gz')
     
     # Calculate the cut points for the screenshots
     cut_distance_X=SUIT.shape[0] / (nX + 1)

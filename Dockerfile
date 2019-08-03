@@ -186,6 +186,14 @@ RUN \
         pip3 install nibabel && \
         pip3 install nilearn 
 
+RUN \
+        pip3 install scikit-learn && \
+        pip3 install matplotlib && \
+        pip3 install ipython && \
+        pip3 install scipy && \
+        pip3 install svgutils
+
+
 ### Copy over scripts
 ADD \
         Scripts/* \
