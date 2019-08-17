@@ -73,8 +73,7 @@ EOF
 # Extract session list
 SESLIST=(
     $(ls ${FSDATADIR} \
-          | grep ${SID} \
-          | grep ses- \
+          | grep sub-${SID}_ses- \
           | grep -v long \
           | sed "s/sub-${SID}_ses-//g"
     )
