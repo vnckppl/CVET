@@ -78,14 +78,14 @@ EOF
 # session; then for a longitudinal folder. If that is not
 # present, then look for a cross-sectional folder.
 if [ ${SESN} -gt 1 ]; then
-    FSSUBDIR=$(ls -p ${FSDATADIR} | grep \/ | sed 's/\///g' | grep ${SID} | grep ${SES} | grep long)
+    FSSUBDIR=$(ls -p ${FSDATADIR} | grep \/ | sed 's/\///g' | grep sub-${SID}_ses-${SES} | grep long)
     FSDIR="${FSDATADIR}/${FSSUBDIR}"
     if [ ! -d ${FSDATADIR} ]; then
-        FSSUBDIR=$(ls -p ${FSDATADIR} | grep \/ | sed 's/\///g' | grep ${SID} | grep ${SES})
+        FSSUBDIR=$(ls -p ${FSDATADIR} | grep \/ | sed 's/\///g' | grep sub-${SID}_ses-${SES})
         FSDIR="${FSDATADIR}/${FSSUBDIR}"
     fi
 elif [ ${SESN} -eq 1 ]; then
-    FSSUBDIR=$(ls -p ${FSDATADIR} | grep \/ | sed 's/\///g' | grep ${SID} | grep ${SES} | grep -v long)
+    FSSUBDIR=$(ls -p ${FSDATADIR} | grep \/ | sed 's/\///g' | grep sub-${SID}_ses-${SES} | grep -v long)
     FSDIR="${FSDATADIR}/${FSSUBDIR}"               
 fi
 if [ -z ${FSDIR} ]; then
