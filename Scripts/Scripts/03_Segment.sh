@@ -87,14 +87,14 @@ if [ -z ${FSDIR} ]; then
 fi
 
 # Convert native space averaged T1 to nii for SPM
-rawavg=$(find ${FSDATADIR} | grep ${SID} | grep ${SES} | grep -v long | grep rawavg.mgz)
+rawavg=$(find ${FSDATADIR} | grep sub-${SID}_ses-${SES} | grep -v long | grep rawavg.mgz)
 mri_convert \
     ${rawavg} \
     ${oDIR}/sub-${SID}_ses-${SES}_rawavg.nii.gz
 
 # Apply bias field correction in a briain mask.
 # First transform brainmask to rawavg space
-orig=$(find ${FSDATADIR} | grep ${SID} | grep ${SES} | grep -v long | grep orig.mgz)
+orig=$(find ${FSDATADIR} | grep sub-${SID}_ses-${SES} | grep -v long | grep orig.mgz)
 # Extract the registation parameters from native space to freesurfer native space
 tkregister2 \
     --mov ${rawavg} \
@@ -111,7 +111,7 @@ lta_convert \
     --src ${rawavg}
 
 # Conert the brain mask to nifti
-brainmask=$(find ${FSDATADIR} | grep ${SID} | grep ${SES} | grep -v long | grep brainmask.mgz)
+brainmask=$(find ${FSDATADIR} | grep sub-${SID}_ses-${SES} | grep -v long | grep brainmask.mgz)
 mri_convert \
     ${brainmask} \
     ${oDIR}/sub-${SID}_ses-${SES}_brainmask.nii.gz
