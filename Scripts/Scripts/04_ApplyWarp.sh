@@ -317,7 +317,7 @@ fslmaths \
     ${oDIR}/mwcgm.nii.gz \
     -mas ${tDIR}/maskSUIT.nii.gz \
     -s 1.70 \
-    ${oDIR}/s8mwcgm.nii.gz
+    ${oDIR}/s4mwcgm.nii.gz
 
 
 
