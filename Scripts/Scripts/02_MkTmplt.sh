@@ -247,7 +247,8 @@ fi
 
 # Calculate warp
 antsRegistration  \
-   -d 3  \
+    -d 3  \
+    --winsorize-image-intensities [0.005,0.995] \
    -r [       "${SUIT_Template}" , "${Subject_Template}" ,1]  \
    -m mattes[ "${SUIT_Template}" , "${Subject_Template}" , 1 , 32, regular, 0.3 ]  \
       -t translation[ 0.1 ]  \
