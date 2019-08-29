@@ -266,7 +266,7 @@ lobVols=$(
     paste \
         <(echo "${listMeanVal}" | tr " " "\n") \
         <(echo "${listNumVox}" | tr " " "\n") \
-        | awk -M -v PREC=100 -v var=${voxS} '{ printf "%0.5f\n", $1 * $2 * var }' \
+        | awk -v var=${voxS} '{ printf "%0.5f\n", $1 * $2 * var }' \
         | head -28 \
         | tr "\n" "," \
         | sed 's/,$//g'
@@ -276,7 +276,6 @@ lobVols=$(
 oFile=${oDIR}/sub-${SID}_ses-${SES}_cGM.csv
 # List of lobule names
 lNames="l_I_IV,r_I_IV,l_V,r_V,l_VI,v_VI,r_VI,l_CrusI,v_CrusI,r_CrusI,l_CrusII,v_CrusII,r_CrusII,l_VIIb,v_VIIb,r_VIIb,l_VIIIa,v_VIIIa,r_VIIIa,l_VIIIb,v_VIIIb,r_VIIIb,l_IX,v_IX,r_IX,l_X,v_X,r_X"
-
 
 # Write out Header and Data
 echo SUB,SES,${lNames},spmICV,eTIV | sed 's/  *//g' > ${oFile}
