@@ -155,8 +155,24 @@ fslmaths \
     -bin \
     ${oDIR}/SPMbrainMask.nii.gz
 
+# The binary mask is zeros and ones. The mean across
+# the image of these values, multiplied by the
+# number of voxels in the image and the voxel size
+# will give you the volune of the brain mask.
+# Mean intensity across all voxels in the image:
 ICVm=$(fslstats ${oDIR}/SPMbrainMask.nii.gz -m)
-ICVv=$(fslstats ${oDIR}/SPMbrainMask.nii.gz -v | awk '{ print $NF }')
+# Total number of voxels in the image
+ICVv=$(fslstats ${oDIR}/SPMbrainMask.nii.gz -v | awk '{ print $1 }')
+# Voxel size (in mm3)
+pixdim1=$(fslval ${oDIR}/SPMbrainMask.nii.gz pixdim1)
+pixdim2=$(fslval ${oDIR}/SPMbrainMask.nii.gz pixdim2)
+pixdim3=$(fslval ${oDIR}/SPMbrainMask.nii.gz pixdim3)
+voxS=$(echo "scale=20; ${pixdim1} * ${pixdim2} * ${pixdim3}" | bc)
+# Calculate volume
+SPMICV=$(echo "scale=10; ${ICVm} * ${ICVv} * ${voxS}" | bc)
+# Get FreeSurfer's estimated total ICV
+eTIV=$(cat ${FSDIR}/stats/aseg.stats | grep EstimatedTotalIntraCranialVol | awk '{ print $(NF-1) }')
+
 
 # Crop the GM mask with the cerebellum mask to make
 # sure the GM tissue of within the SUIT atlas space
@@ -215,46 +231,56 @@ fslmaths \
 
 # Extract volume per lobule for all regions
 echo "Extract volume per lobule for all regions"
+# The following code extracts a list of the mask values
+# of each of the lobules in the atlas.
 listOfLobules=$(fslstats \
 	            -K ${oDIR}/c_atlasNativeSpace.nii.gz \
 	            ${oDIR}/c_atlasNativeSpace.nii.gz \
 	            -M )
 
+# The following code grabs the mean intensity of the
+# gray matter image within the lobbules of the altas.
+# It does this for each lobule separately. It can
+# happen that a lobule mask includes voxels that are
+# not inside the GM segmentation map, and thus have
+# a GM value of zero. This will result in an overall
+# smaller mean GM value for that cluster, but this
+# will be canceled out by the fact that those voxels
+# will also add to the total number of voxels of
+# that lobule (and volume= avg intensity * number
+# of voxels).
 listMeanVal=$(fslstats \
 	          -K ${oDIR}/c_atlasNativeSpace.nii.gz \
 	          ${oDIR}/cgm.nii.gz \
-	          -m | sed 's/  */,/g' | sed 's/.,$//g' )
+	          -m)
 
+# Get the number of voxels per cluster.
 listNumVox=$(fslstats \
 	         -K ${oDIR}/c_atlasNativeSpace.nii.gz \
 	         ${oDIR}/c_atlasNativeSpace.nii.gz \
-	         -v | awk '{ for (i=1;i<=NF;i+=2) print $i }' \
-	         | tr "\n" "," | sed 's/,$//g')
+	         -V | awk '{ for (i=1;i<=NF;i+=2) print $i }')
+
+# Use the mean intensity, the voxel size, and the number of
+# voxels to calculate the volume of gray matter per lobule.
+lobVols=$(
+    paste \
+        <(echo "${listMeanVal}" | tr " " "\n") \
+        <(echo "${listNumVox}" | tr " " "\n") \
+        | awk -M -v PREC=100 -v var=${voxS} '{ printf "%0.5f\n", $1 * $2 * var }' \
+        | head -28 \
+        | tr "\n" "," \
+        | sed 's/,$//g'
+       )
 
 # Write this info out to a file
 oFile=${oDIR}/sub-${SID}_ses-${SES}_cGM.csv
-# Header
-# mean Gray Matter per voxel
-H1=$(for i in $(echo "${listOfLobules}" | sed 's/\.000000//g'); do
-	 if [ ${i} -lt 10 ]; then
-	     echo -n mGM_0${i},
-	 else echo -n mGM_${i},
-	 fi
-     done | sed 's/,$//g')
-# number of voxels
-H2=$(for i in $(echo "${listOfLobules}" | sed 's/\.000000//g'); do
-	 if [ ${i} -lt 10 ]; then
-	     echo -n vGM_0${i},
-	 else echo -n vGM_${i},
-	 fi
-     done | sed 's/,$//g')
+# List of lobule names
+lNames="l_I_IV,r_I_IV,l_V,r_V,l_VI,v_VI,r_VI,l_CrusI,v_CrusI,r_CrusI,l_CrusII,v_CrusII,r_CrusII,l_VIIb,v_VIIb,r_VIIb,l_VIIIa,v_VIIIa,r_VIIIa,l_VIIIb,v_VIIIb,r_VIIIb,l_IX,v_IX,r_IX,l_X,v_X,r_X"
 
-# Get FreeSurfer's estimated total ICV
-eTIV=$(cat ${FSDIR}/stats/aseg.stats | grep EstimatedTotalIntraCranialVol | awk '{ print $(NF-1) }')
 
 # Write out Header and Data
-echo SUB,SES,${H1},${H2},mICVSPM,vICVSPM,eTIV | sed 's/  *//g' > ${oFile}
-echo ${SID},${SES},${listMeanVal},${listNumVox},${ICVm},${ICVv},${eTIV} | sed 's/  *//g' >> ${oFile}
+echo SUB,SES,${lNames},spmICV,eTIV | sed 's/  *//g' > ${oFile}
+echo ${SID},${SES},${lobVols},${SPMICV},${eTIV} | sed 's/  *//g' >> ${oFile}
 
 
 
