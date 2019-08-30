@@ -14,6 +14,8 @@ from nilearn import plotting
 import svgutils.compose as sc
 import numpy as np
 import re
+import matplotlib.pyplot as plt
+import pandas as pd
 
 
 
@@ -151,14 +153,6 @@ oDIR='/data/out/05_Report/sub-'+SID
 os.makedirs(oDIR, exist_ok=True)
 tDIR='/software/SUIT-templates'
 
-# iDIR2='/Users/vincent/Data/tmp/20190625_N4test/derivatives/CVET/02_Template/sub-'+SID
-# iDIR22=iDIR2+'/02_SubjectTemplate'
-# iDIR23=iDIR2+'/03_SUITTemplate'
-# iDIR3='/Users/vincent/Data/tmp/20190625_N4test/derivatives/CVET/03_Segment/sub-'+SID
-# iDIR4='/Users/vincent/Data/tmp/20190625_N4test/derivatives/CVET/04_ApplyWarp/sub-'+SID
-# oDIR='/Users/vincent/Data/tmp/20190625_N4test/derivatives/CVET/05_Report/sub-'+SID
-# os.makedirs(oDIR, exist_ok=True)
-# tDIR="/Users/vincent/Data/tmp/SPM12StandaloneWithSUIT/spm12/toolbox/suit/atlas"
 
 # List of sessions
 SESLIST=sorted(glob(iDIR4+'/*'))
@@ -601,6 +595,7 @@ for SES in SESLIST:
     # Export to HTML
     html=html+f"""
     <h2>Session: {SES}</h2>
+    <div class="imgbox">
     """
     
     # Set output folder
@@ -671,6 +666,74 @@ for SES in SESLIST:
         <img class="img" src="./ses-{SES}/Sub2SUIT_{plane}_a.svg">
         """
     html=html+f"""
+    </div>
+    """
+
+
+
+# Create Spaghetti Plot for ROI volumes
+message = f"""
+##############################################################
+### Create Spaghetti Plot for ROI volumes                  ###
+##############################################################
+
+"""
+print(message)
+
+# Spaghetti plot (only if there is more than one time point)
+if len(SESLIST) > 1:
+
+    # Export to HTML
+    html=html+f"""
+    <h1>Cerebellar Lobule Volume Changes Over Time</h1>
+    """
+
+    # List all data files
+    searchPattern=iDIR4+'/**/*csv*'
+    list=sorted(glob(searchPattern))
+    
+    # Append all data
+    data = pd.read_csv(list[0])
+    for i in range(1,len(list)):
+    
+        dataTmp = data.append(pd.read_csv(list[i]))
+        data = dataTmp
+    
+    # Initialize the figure
+    plt.style.use('seaborn-darkgrid')
+    plt.figure(figsize=(12,12))
+    
+    # Font size
+    plt.rcParams.update({'font.size': 9})
+    
+    # Create a color palette
+    palette = plt.get_cmap('viridis', 33)
+     
+    # Multiple line plot
+    num=0
+    for column in data.drop(['SUB','SES'], axis=1):
+        num+=1
+     
+        # Find the right spot on the plot
+        plt.subplot(5,6, num)
+     
+        # Plot the lineplot
+        plt.plot(data['SES'], data[column], marker='', color=palette(num), linewidth=1.9, alpha=0.9, label=column)
+      
+        # Add title
+        plt.title(column, loc='left', fontsize=9, fontweight=0, color=palette(num) )
+     
+    # Improve spacing
+    plt.tight_layout()
+    
+    # Write out graph
+    oPlot=oDIR+"/ROIs_over_time.svg"
+    plt.savefig(oPlot)
+    
+    # Add to html
+    html=html+f"""
+    <div class="imgbox">
+    <img class="img" src="./ROIs_over_time.svg">
     </div>
     """
 
