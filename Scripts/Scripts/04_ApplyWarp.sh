@@ -279,7 +279,7 @@ lNames="l_I_IV,r_I_IV,l_V,r_V,l_VI,v_VI,r_VI,l_CrusI,v_CrusI,r_CrusI,l_CrusII,v_
 
 # Write out Header and Data
 echo SUB,SES,${lNames},spmICV,eTIV | sed 's/  *//g' > ${oFile}
-echo ${SID},${SES},${lobVols},${SPMICV},${eTIV} | sed 's/  *//g' >> ${oFile}
+echo ${SID},${SES},${lobVols},${SPMICV},${eTIV} | sed -e 's/  *//g' -e 's/,$//g' >> ${oFile}
 
 
 
