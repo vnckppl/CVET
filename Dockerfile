@@ -169,30 +169,31 @@ ENV \
 ###############
 ### Scripts ###
 ###############
-RUN  apt-get install -y libglu1-mesa python3
-
-#        pip3 install nibabel  python3 python3-pip 
+RUN apt-get install -y libglu1-mesa python3
 RUN apt-get install -y git wget tcsh build-essential gfortran
 RUN apt-get install -y libblas-dev liblapack-dev zlib1g-dev
 RUN apt-get install -y libxmu-dev libxmu-headers libxi-dev libxt-dev libx11-dev
-#        libglu1-mesa-dev
+# libglu1-mesa-dev
 
-# Nilearn and dependencies
+# Python packages
 RUN \
         apt-get update && \
-        apt-get install -y python3-pip 
+        apt-get install -y python3-pip
+
+RUN \
+        apt-get update && \
+        apt-get dist-upgrade -y
+
 RUN \
         pip3 install nipype && \
         pip3 install nibabel && \
-        pip3 install nilearn 
-
-RUN \
+        pip3 install nilearn && \
         pip3 install scikit-learn && \
         pip3 install matplotlib && \
         pip3 install ipython && \
         pip3 install scipy && \
-        pip3 install svgutils
-
+        pip3 install svgutils && \
+        pip3 install pandas
 
 ### Copy over scripts
 ADD \
