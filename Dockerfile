@@ -2,11 +2,6 @@ FROM ubuntu:bionic
 
 # CVET 
 
-# Copy over some files
-ADD \
-        cp2docker/ \
-        /software
-
 ### Environment for FSL, ANTs, FreeSurfer
 ENV \
         DEBIAN_FRONTEND=noninteractive \
@@ -42,6 +37,7 @@ ENV \
 
 ### Install Software
 RUN \
+        mkdir -p /software && \
         mkdir -p /input && \
         mkdir -p /output && \
         apt-get update && \
@@ -127,6 +123,11 @@ RUN \
         rm -rf /software/ANTS-2.3.1/* && \
         mv /software/bin /software/ANTS-2.3.1/bin && \
         rm -rf /software/ANTS-source
+
+### Copy over some files
+ADD \
+        cp2docker/ \
+        /software/
 
 ### Set work directory to /software
 WORKDIR /software
