@@ -63,7 +63,7 @@ EOF
 for SES in ${SESLIST[@]}; do
 
     # Count number of T1 weighted images
-    T1list=( $(ls ${iDIR}/ses-${SES}/anat/sub-${SID}_ses-${SES}*T1w.nii.gz 2>/dev/null| sort) )
+    T1list=( $(ls ${iDIR}/ses-${SES}/anat/sub-${SID}_ses-${SES}*T1w.{nii,nii.gz} 2>/dev/null| sort) )
     echo "Number of T1-weighted images found for session ${SES}: ${#T1list[@]}"
     echo "${T1list[@]}" | tr " " "\n" | sed 's/^  *//g'
     echo
