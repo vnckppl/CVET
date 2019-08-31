@@ -116,7 +116,7 @@ RUN \
         --exclude='freesurfer/lib/cuda' \
         --exclude='freesurfer/lib/qt' && \
         /bin/bash -c 'touch /software/freesurfer/.license' && \
-        apt-get remove -y cmake curl git g++ wget gnupg2 gfortran && \
+        apt-get remove -y curl g++ gnupg2 && \
         apt-get autoremove -y && \
         rm -rf /var/lib/apt/lists/* && \
         mv /software/ANTS-2.3.1/bin /software/bin && \
