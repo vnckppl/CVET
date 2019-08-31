@@ -4,8 +4,8 @@ isolateTest.sh
 makeStandaloneSUIT_Cluster_CHPC.sh
 runDocker_test.sh
 /OLD/
-/SPM_SUIT/
-/Template/
-/Tryout/
-
+/cp2docker/SPM/
+/cp2docker/ANTS-templates/
+/cp2docker/SPM-templates/
+/cp2docker/SUIT-templates/
 
