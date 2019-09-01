@@ -110,13 +110,13 @@ lta_convert \
     --trg ${orig} \
     --src ${rawavg}
 
-# Conert the brain mask to nifti
+# Convert the brain mask to nifti
 brainmask=$(find ${FSDATADIR} | grep sub-${SID}_ses-${SES} | grep -v long | grep brainmask.mgz)
 mri_convert \
     ${brainmask} \
     ${oDIR}/sub-${SID}_ses-${SES}_brainmask.nii.gz
 
-# Apply the registration to the brian mask
+# Apply the registration to the brain mask
 antsApplyTransforms \
     -d 3 \
     -i ${oDIR}/sub-${SID}_ses-${SES}_brainmask.nii.gz \
