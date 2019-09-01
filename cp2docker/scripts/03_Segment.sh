@@ -92,7 +92,7 @@ mri_convert \
     ${rawavg} \
     ${oDIR}/sub-${SID}_ses-${SES}_rawavg.nii.gz
 
-# Apply bias field correction in a briain mask.
+# Apply bias field correction in a brain mask.
 # First transform brainmask to rawavg space
 orig=$(find ${FSDATADIR} | grep sub-${SID}_ses-${SES} | grep -v long | grep orig.mgz)
 # Extract the registation parameters from native space to freesurfer native space
