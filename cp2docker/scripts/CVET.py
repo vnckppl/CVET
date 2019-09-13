@@ -47,6 +47,11 @@ if __name__ == "__main__":
                         choices=[0,1],
                         default=0,
                         type=int)
+    parser.add_argument('--segment',
+                        help="Select which algorithm to use for tissue class segmentation: "
+                        "ANTs Atropos (default), or SPM12.",
+                        choices=['A','S'],
+                        default='A')
     parser.add_argument('--average',
                         help='Select 1 to create an average from multiple T1-weighted '
                         'images if more than one T1-weighted image was '
@@ -227,7 +232,7 @@ if __name__ == "__main__":
         
         
         
-        # 03 Segment the whole brain images using SPM12
+        # 03 Segment the whole brain images using SPM12 or ANTs Atropos
         # Loop over sessions
         for SES in SESLIST:
             
@@ -246,6 +251,7 @@ if __name__ == "__main__":
                        '-t', SES,
                        '-n', str(SESN),
                        '-f', str(FSOPT),
+                       '-m', str(args.segment),
                        '-i', str(args.intermediate_files)
             ]
             
@@ -273,6 +279,7 @@ if __name__ == "__main__":
                        '-t', SES,
                        '-n', str(SESN),
                        '-f', str(FSOPT),
+                       '-m', str(args.segment),
                        '-i', str(args.intermediate_files)
             ]
             

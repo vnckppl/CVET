@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Input arguments
-while getopts "s:t:n:f:i:r:" OPTION
+while getopts "s:t:n:f:m:i:r:" OPTION
 do
      case $OPTION in
          s)
@@ -15,6 +15,9 @@ do
              ;;
          f)
              FSDATA=$OPTARG
+             ;;
+         m)
+             METHOD=$OPTARG
              ;;
          i)
              INTERMEDIATE=$OPTARG
@@ -144,7 +147,10 @@ antsApplyTransforms \
     --float \
     -v
 
-#  Calculate SPM12's ICV
+#  Calculate SPM12's / ANTs Atropos' ICV
+if [ ${METHOD} = "A" ]; then BMASK=ANTsBrainMask.nii.gz; BMlabel=ANTsICV; fi
+if [ ${METHOD} = "S" ]; then BMASK=SPMbrainMask.nii.gz;  BMlabel=SPMICV; fi
+
 fslmaths \
     ${iDIR3}/c1sub-${SID}_ses-${SES}_rawavg_N4.nii.gz \
     -add \
@@ -153,23 +159,23 @@ fslmaths \
     ${iDIR3}/c3sub-${SID}_ses-${SES}_rawavg_N4.nii.gz \
     -thr 0.5 \
     -bin \
-    ${oDIR}/SPMbrainMask.nii.gz
+    ${oDIR}/${BMASK}
 
 # The binary mask is zeros and ones. The mean across
 # the image of these values, multiplied by the
 # number of voxels in the image and the voxel size
 # will give you the volune of the brain mask.
 # Mean intensity across all voxels in the image:
-ICVm=$(fslstats ${oDIR}/SPMbrainMask.nii.gz -m)
+ICVm=$(fslstats ${oDIR}/${BMASK} -m)
 # Total number of voxels in the image
-ICVv=$(fslstats ${oDIR}/SPMbrainMask.nii.gz -v | awk '{ print $1 }')
+ICVv=$(fslstats ${oDIR}/${BMASK} -v | awk '{ print $1 }')
 # Voxel size (in mm3)
-pixdim1=$(fslval ${oDIR}/SPMbrainMask.nii.gz pixdim1)
-pixdim2=$(fslval ${oDIR}/SPMbrainMask.nii.gz pixdim2)
-pixdim3=$(fslval ${oDIR}/SPMbrainMask.nii.gz pixdim3)
+pixdim1=$(fslval ${oDIR}/${BMASK} pixdim1)
+pixdim2=$(fslval ${oDIR}/${BMASK} pixdim2)
+pixdim3=$(fslval ${oDIR}/${BMASK} pixdim3)
 voxS=$(echo "scale=20; ${pixdim1} * ${pixdim2} * ${pixdim3}" | bc)
 # Calculate volume
-SPMICV=$(echo "scale=10; ${ICVm} * ${ICVv} * ${voxS}" | bc)
+BMICV=$(echo "scale=10; ${ICVm} * ${ICVv} * ${voxS}" | bc)
 # Get FreeSurfer's estimated total ICV
 eTIV=$(cat ${FSDIR}/stats/aseg.stats | grep EstimatedTotalIntraCranialVol | awk '{ print $(NF-1) }')
 
@@ -278,8 +284,8 @@ oFile=${oDIR}/sub-${SID}_ses-${SES}_cGM.csv
 lNames="l_I_IV,r_I_IV,l_V,r_V,l_VI,v_VI,r_VI,l_CrusI,v_CrusI,r_CrusI,l_CrusII,v_CrusII,r_CrusII,l_VIIb,v_VIIb,r_VIIb,l_VIIIa,v_VIIIa,r_VIIIa,l_VIIIb,v_VIIIb,r_VIIIb,l_IX,v_IX,r_IX,l_X,v_X,r_X"
 
 # Write out Header and Data
-echo SUB,SES,${lNames},spmICV,eTIV | sed 's/  *//g' > ${oFile}
-echo ${SID},${SES},${lobVols},${SPMICV},${eTIV} | sed -e 's/  *//g' -e 's/,$//g' >> ${oFile}
+echo SUB,SES,${lNames},${BMlabel},eTIV | sed 's/  *//g' > ${oFile}
+echo ${SID},${SES},${lobVols},${BMICV},${eTIV} | sed -e 's/  *//g' -e 's/,$//g' >> ${oFile}
 
 
 
