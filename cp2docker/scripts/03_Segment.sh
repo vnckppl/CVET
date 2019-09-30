@@ -250,10 +250,16 @@ EOF
         ${oDIR}/sub-${SID}_ses-${SES}_brainmask_in_rawavg.nii.gz \
         -bin \
         ${oDIR}/sub-${SID}_ses-${SES}_bin_brainmask_in_rawavg.nii.gz
+
+    # ** Create Skull Stripped Brain
+    fslmaths \
+        ${oDIR}/sub-${SID}_ses-${SES}_rawavg_N4.nii.gz \
+        -mas ${oDIR}/sub-${SID}_ses-${SES}_bin_brainmask_in_rawavg.nii.gz \
+        ${oDIR}/sub-${SID}_ses-${SES}_rawavg_ssN4.nii.gz
     
     # ** Calculate warp from Tissue Prior Probability Map space to Native Space
     T="${pDIR}/MNI152_T1_1mm_brain.nii.gz"
-    M="${oDIR}/sub-${SID}_ses-${SES}_rawavg_N4.nii.gz"
+    M="${oDIR}/sub-${SID}_ses-${SES}_rawavg_ssN4.nii.gz"
     oDIRa1="${oDIR}/01_Warp"
     mkdir -p "${oDIRa1}"
 
@@ -297,7 +303,7 @@ EOF
         antsApplyTransforms \
             -d 3 \
             -i ${pDIR}/p${i}.nii.gz \
-            -r ${T1} \
+            -r ${M} \
             -o ${oDIRa2}/wp${i}.nii.gz \
             -t ${oDIRa1}/ants_1InverseWarp.nii.gz \
             -t [${oDIRa1}/ants_0GenericAffine.mat,1] \
@@ -306,6 +312,14 @@ EOF
 
     done
 
+    # ** Create Mask That Includes Tissue Classes
+    # I.e., all voxels.
+    fslmaths \
+        ${oDIR}/sub-${SID}_ses-${SES}_brainmask_in_rawavg.nii.gz \
+        -add 1 \
+        -bin \
+        ${oDIR}/sub-${SID}_ses-${SES}_all_voxel_mask_in_rawavg.nii.gz
+    
     # ** Atropos segmentation
     oDIRa3="${oDIR}/03_Atropos"
     mkdir -p "${oDIRa3}"
@@ -315,11 +329,11 @@ EOF
         -d 3 \
         -a ${oDIR}/sub-${SID}_ses-${SES}_rawavg_N4.nii.gz \
         -c 6 \
-        -x ${oDIR}/sub-${SID}_ses-${SES}_bin_brainmask_in_rawavg.nii.gz \
+        -x ${oDIR}/sub-${SID}_ses-${SES}_all_voxel_mask_in_rawavg.nii.gz \
         -p ${oDIRa2}/wp%d.nii.gz \
         -o ${oDIRa3}/
     
-    # Restrict segmentations to brain mask
+    # ** Restrict segmentations to brain mask
     for i in {1..6}; do
 
         # Mask out
@@ -329,21 +343,31 @@ EOF
             ${oDIR}/c${i}sub-${SID}_ses-${SES}_rawavg_N4.nii.gz
     done
 
-    # Restrict labeled image to brain mask
+    # ** Restrict labeled image to brain mask
     fslmaths \
         ${oDIRa3}/Segmentation.nii.gz \
         -mas ${oDIR}/sub-${SID}_ses-${SES}_brainmask_in_rawavg.nii.gz \
         ${oDIRa3}/labels.nii.gz          
-
-    
+  
 fi
-
 
 # * Clean up if flag to keep intermediate files is not set
 if [ ${INTERMEDIATE} -eq 0 ]; then
 
-    echo "No files here to clean up yet"
-
+    rm -f \
+       ${oDIR}/register.native.dat \
+       ${oDIR}/register.native.txt \
+       ${oDIR}/BF_rawavg.nii.gz \
+       ${oDIR}/N4_effect.nii.gz       
+            
+    if [ "${METHOD}" = "A" ]; then
+        
+        rm -rf ${oDIRa1} ${oDIRa2} ${oDIRa3}
+        rm -f \
+           ${oDIR}/sub-${SID}_ses-${SES}_all_voxel_mask_in_rawavg.nii.gz
+           
+    fi
+    
 fi
 
 # Exit
