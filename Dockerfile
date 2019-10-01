@@ -183,6 +183,7 @@ ADD \
 
 ### Set work directory to /software
 WORKDIR /software
+RUN chmod -R 777 /software
 
 ### Run
 ENTRYPOINT ["python3", "/software/scripts/CVET.py"]
