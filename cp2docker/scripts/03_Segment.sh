@@ -227,6 +227,19 @@ EOF
 	matlabbatch{1}.spm.spatial.preproc.warp.write = [0 0];
 EOF
 
+    # *** If you are NOT root, set your home folder
+    # If you run the container as user, then HOME is set to '/'.
+    # This results in a permission error from the spm binary.
+    # Create a HOME folder and set the environment.
+    if [ ! "$(whoami)" = "root" ]; then
+        
+        # Export and create home folder 
+        echo "CVET running as user: set 'HOME' environment for homeless user"
+        export HOME=/software/myHome
+        mkdir -p ${HOME}
+        
+    fi
+
     # *** Run segmentation job
     /software/SPM/run_spm12.sh \
         /software/MCR/v94 \

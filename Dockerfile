@@ -184,7 +184,6 @@ ADD \
 ### Set work directory to /software and set permissions
 WORKDIR /software
 RUN \
-        mkdir -p /software/SPM/spm12_mcr && \
         find /software -type d -not -path "*freesurfer*" -not -path "*MCR*" | xargs chmod 777 && \
         find /software/scripts | xargs chmod 777 && \
         chmod 777 /

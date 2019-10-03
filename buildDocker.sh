@@ -1,17 +1,42 @@
 #!/bin/bash
 
-# 2019-09-12
+# 2019-10-03
 
 # Build Docker image using docker setup file
+
+# * Environment
+version="1.26"
 DIR="/Users/vincent/Data/Documents/Utah/Kladblok/20171002_Neuroimaging/20190831_CVET/20190521_CVET"
 cd ${DIR}
 
-docker \
+
+# * Build Docker
+read -p "Do you want to build this docker (y/n)? " ANS
+
+if [ ${ANS} = "y" ]; then
+time(
+    docker \
     build \
-    -t vkoppelm/cvet:v1.25 \
+    -t vkoppelm/cvet:v${version} \
     . \
     -f ${DIR}/Dockerfile \
     --cpuset-cpus 3
+)
+fi
+
+
+# * Export Docker
+echo
+read -p "Do you want to export this docker container (y/n)? " ANS
+
+if [ ${ANS} = "y" ]; then
+    time(
+        docker \
+            save vkoppelm/cvet:v${version} \
+            > ~/Data/tmp/CVET_v${version}.tar
+    )
+fi
+
 
 exit
 
