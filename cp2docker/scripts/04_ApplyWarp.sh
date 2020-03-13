@@ -187,11 +187,11 @@ eTIV=$(cat ${FSDIR}/stats/aseg.stats | grep EstimatedTotalIntraCranialVol | awk 
 # pipeline if that is available.
 if [ ${#CLIST[@]} -gt 1 ]; then
 
-    # Transform the cerebellum mask from
-    # long space to native space
+    # Transform the cerebellum mask without brain stem
+    # from long space to native space
     antsApplyTransforms \
     -d 3 \
-    -i ${iDIR21}/cerebellumMask.nii.gz \
+    -i ${iDIR21}/cerebellumMask_noBS.nii.gz \
     -r ${iDIR3}/sub-${SID}_ses-${SES}_rawavg.nii.gz \
     -o ${oDIR}/cMask_long_in_rawavg.nii.gz \
     ${transform_FS_CS2Long} \
@@ -209,7 +209,7 @@ elif  [ ${#CLIST[@]} -eq 1 ]; then
     # matrix.
     antsApplyTransforms \
     -d 3 \
-    -i ${iDIR21}/cerebellumMask.nii.gz \
+    -i ${iDIR21}/cerebellumMask_noBS.nii.gz \
     -r ${iDIR3}/sub-${SID}_ses-${SES}_rawavg.nii.gz \
     -o ${oDIR}/cMask_in_rawavg.nii.gz \
     -t [${iDIR3}/register.native.txt,1] \

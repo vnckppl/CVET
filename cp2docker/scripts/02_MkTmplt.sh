@@ -128,6 +128,7 @@ for SES in ${SESLIST[@]}; do
 
     done
 
+    # Mask with Brain Stem (for normalization)
     fslmaths \
         ${oDIRm}/LcWM.nii.gz \
         -add ${oDIRm}/LcGM.nii.gz \
@@ -137,6 +138,15 @@ for SES in ${SESLIST[@]}; do
         -bin \
         ${oDIRm}/cerebellumMask.nii.gz
 
+    # Mask without Brain Stem (for volume extraction)
+    fslmaths \
+        ${oDIRm}/LcWM.nii.gz \
+        -add ${oDIRm}/LcGM.nii.gz \
+        -add ${oDIRm}/RcWM.nii.gz \
+        -add ${oDIRm}/RcGM.nii.gz \
+        -bin \
+        ${oDIRm}/cerebellumMask_noBS.nii.gz
+    
     # Apply mask
     fslmaths \
         ${oDIRm}/T1.nii.gz \
