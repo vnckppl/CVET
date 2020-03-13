@@ -114,10 +114,10 @@ for SES in ${SESLIST[@]}; do
         ${FSDIR}/mri/T1.mgz \
         ${oDIRm}/T1.nii.gz
 
-    # Create cerebellum mask from FreeSurfer labels
-    ROIn=(7 8 46 47)                              # Lables numbers
-    ROIl=("LcWM" "LcGM" "RcWM" "RcGM")            # Labels
-    ROIi=( $(seq -w 0 $(( ${#ROIn[@]} - 1 )) ) )  # Index list
+    # Create cerebellum + brain stem  mask from FreeSurfer labels
+    ROIn=(7 8 46 47 16)                              # Lables numbers
+    ROIl=("LcWM" "LcGM" "RcWM" "RcGM" "BrainStem")   # Labels
+    ROIi=( $(seq -w 0 $(( ${#ROIn[@]} - 1 )) ) )     # Index list
     for R in ${ROIi[@]}; do
 
         fslmaths \
@@ -133,6 +133,7 @@ for SES in ${SESLIST[@]}; do
         -add ${oDIRm}/LcGM.nii.gz \
         -add ${oDIRm}/RcWM.nii.gz \
         -add ${oDIRm}/RcGM.nii.gz \
+        -add ${oDIRm}/BrainStem.nii.gz \
         -bin \
         ${oDIRm}/cerebellumMask.nii.gz
 
