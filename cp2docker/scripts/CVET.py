@@ -1,11 +1,11 @@
 #! /usr/bin/env python3
 
+# * Libraries
 import sys
 import argparse
 import os
 import subprocess
 from glob import glob
-
 
 # * Gather arguments
 if __name__ == "__main__":
@@ -14,7 +14,6 @@ if __name__ == "__main__":
         'cerebellar volumes from T1-weighted images. BIDS mode. '
         'If you specify a BIDS-formatted freesurfer folder as input. All data '
         'is extracted automatiacally from that folder. ')
-
 
     parser.add_argument('bids_dir',
                         help='The directory with the input dataset '
@@ -28,7 +27,6 @@ if __name__ == "__main__":
                         'only "participant" in the case of the Cerebellar '
                         ' Volume Extraction Tool (see BIDS-Apps specification). ',
                         choices=['participant'])
-
 
     parser.add_argument('--participant_label',
                         help='The label of the participant that should be analyzed. The label '
@@ -45,6 +43,12 @@ if __name__ == "__main__":
                         "FreeSurfer's longitudinal pipeline. Also, make sure to mount "
                         "your FreeSurfer subject folder to /freesurfer with docker.",
                         choices=[0, 1],
+                        default=0,
+                        type=int)
+    parser.add.argument('--makelocalcopy',
+                        help='Copy the already processed freesurfer data '
+                        '(see "--freesurfer") inside the container',
+                        choises=[0, 1],
                         default=0,
                         type=int)
     parser.add_argument('--segment',
@@ -74,13 +78,19 @@ if __name__ == "__main__":
                         type=int)
     parser.add_argument('--report',
                         help='Generate a report for quality control of the data processing')
+    parser.add.argument('--biasfieldcorrection',
+                        help='Perform N4 non-uniformity correction of the T1 image '
+                        'as an initial procesing step.',
+                        choises=[0, 1],
+                        default=0,
+                        type=int)
 
     args = parser.parse_args()
 
     # * Parse arguments
     # FreeSurfer
-    # If '--freesurfer' has been set to 1, check
-    # if there is any data in that folder.
+    # If '--freesurfer' has been set to 1 (previously processed data),
+    # check if there is any data in the specified folder.
     if args.freesurfer == 1:
 
         files = glob('/freesurfer/sub-*')
@@ -113,6 +123,7 @@ if __name__ == "__main__":
         except subprocess.CalledProcessError as err:
             raise Exception(err)
 
+    # * List of Subjects
     # Create a list of subjects that need to be processed
     # If the participant_label has not been specified,
     # process all subjects
@@ -127,13 +138,13 @@ if __name__ == "__main__":
         # these subjects to the loop
         SUBLIST = args.participant_label
 
-    # Loop over subjects
+    # * Loop over subjects
     for SID in SUBLIST:
 
-        # Announce
+        # ** Announce
         print('Working on: Subject ' + SID)
 
-        # Subject DIR
+        # ** Subject DIR
         SUBDIR = inputFolder + '/sub-' + SID
 
         # Create a list with all sessions
@@ -144,7 +155,7 @@ if __name__ == "__main__":
         # a 'run' identifier in the file names, only pick
         # 'run-1'.
 
-        # List all time points with anat folders
+        # ** List all time points with anat folders
         ANATLIST = sorted(glob(SUBDIR + '/ses-*/anat'))
         ANATLIST = [i.split('/anat', 1)[0] for i in ANATLIST]
         ANATLIST = [i.split('ses-', 1)[1] for i in ANATLIST]
@@ -154,52 +165,55 @@ if __name__ == "__main__":
         # case, add the session to the list of sessions
         SESLIST = []
         for ASES in ANATLIST:
-            # List all the T1-weighted images for this time point
+            # *** List all the T1-weighted images for this time point
             T1LIST = sorted(glob(SUBDIR + '/ses-' + ASES + '/anat/*T1w.nii*'))
             # If there is at least one image, add this
             # session to the session list
             if len(T1LIST) > 0:
                 SESLIST.append(ASES)
 
-        # Count the sessions
+        # ** Count the sessions
         SESN = len(SESLIST)
 
         # ** RUN SCRIPTS
 
-        # *** 01 FreeSurfer
+        # ** 01 FreeSurfer
         # Only run FreeSurfer if no FreeSurfer folder was mounted
         if FSOPT == 1:
-            # Announce
+
+            # *** Announce
             print('               +----------> Run FreeSurfer')
 
-            # Define log file
+            # *** Define log file
             logFolder = '/data/out/01_FreeSurfer'
             os.makedirs(logFolder, exist_ok=True)
             log = logFolder + '/sub-' + SID + '_log-01-FS.txt'
 
-            # Arguments
+            # *** Arguments
             script = scriptsDir + '/01_FS.sh'
             arguments = [
                 script,
                 '-s', SID,
                 '-a', str(args.average),
                 '-c', str(args.n_cpus),
-                '-i', str(args.intermediate_files)
+                '-i', str(args.intermediate_files),
+                '-n', str(args.biasfieldcorrection),
+                '-l', str(args.makelocalcopy)
             ]
 
-            # Start script
+            # *** Start script
             run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
 
-        # *** 02 Subject Template Creation and Normalization to SUIT Space
-        # Announce
+        # ** 02 Subject Template Creation and Normalization to SUIT Space
+        # *** Announce
         print('               +----------> Build Subject Template and Normalize to SUIT')
 
-        # Define log file
+        # *** Define log file
         logFolder = '/data/out/02_Template/sub-' + SID
         os.makedirs(logFolder)
         log = logFolder + '/sub-' + SID + '_log-02-Template.txt'
 
-        # Arguments
+        # *** Arguments
         script = scriptsDir + '/02_MkTmplt.sh'
         arguments = [
             script,
@@ -210,22 +224,22 @@ if __name__ == "__main__":
             '-i', str(args.intermediate_files)
         ]
 
-        # Start script
+        # *** Start script
         run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
 
-        # *** 03 Segment the whole brain images using SPM12 or ANTs Atropos
-        # Loop over sessions
+        # ** 03 Segment the whole brain images using SPM12 or ANTs Atropos
+        # *** Loop over sessions
         for SES in SESLIST:
 
-            # Announce
+            # **** Announce
             print('               +----------> Tissue Segmentation   -- Session ' + SES)
 
-            # Define log file
+            # **** Define log file
             logFolder = '/data/out/03_Segment/sub-' + SID + '/ses-' + SES
             os.makedirs(logFolder)
             log = logFolder + '/sub-' + SID + '_ses-' + SES + '_log-03-Segment.txt'
 
-            # Arguments
+            # **** Arguments
             script = scriptsDir + '/03_Segment.sh'
             arguments = [
                 script,
@@ -237,22 +251,22 @@ if __name__ == "__main__":
                 '-i', str(args.intermediate_files)
             ]
 
-            # Start script
+            # **** Start script
             run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
 
-        # *** 04 Extract volumes and create modulated warped GM maps
-        # Loop over sessions
+        # ** 04 Extract volumes and create modulated warped GM maps
+        # *** Loop over sessions
         for SES in SESLIST:
 
-            # Announce
+            # **** Announce
             print('               +----------> Volume Extraction     -- Session ' + SES)
 
-            # Define log file
+            # **** Define log file
             logFolder = '/data/out/04_ApplyWarp/sub-' + SID + '/ses-' + SES
             os.makedirs(logFolder)
             log = logFolder + '/sub-' + SID + '_ses-' + SES + '_log-04-ApplyWarp.txt'
 
-            # Arguments
+            # **** Arguments
             script = scriptsDir + '/04_ApplyWarp.sh'
             arguments = [
                 script,
@@ -264,26 +278,26 @@ if __name__ == "__main__":
                 '-i', str(args.intermediate_files)
             ]
 
-            # Start script
+            # **** Start script
             run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
 
-        # *** 05 Create quality control HTML report
-        # Loop over sessions
+        # ** 05 Create quality control HTML report
+        # *** Loop over sessions
 
-        # Announce
+        # *** Announce
         print('               +----------> Quality Control HTML Report')
 
-        # Define log file
+        # *** Define log file
         logFolder = '/data/out/05_Report/sub-' + SID
         os.makedirs(logFolder)
         log = logFolder + '/sub-' + SID + '_log-05-QC_Report.txt'
 
-        # Arguments
+        # *** Arguments
         script = scriptsDir + '/05_Report.py'
         arguments = [
             script,
             '--SID', SID
         ]
 
-        # Start script
+        # *** Start script
         run_cmd(arguments, log, {'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(args.n_cpus)})
