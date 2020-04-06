@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# 2020-03-13
+# 2020-04-06
 
 # Build Docker image using docker setup file
 
 # * Environment
-version="1.28"
+version="1.29"
 DIR="/Users/vincent/Data/Documents/Utah/Kladblok/20171002_Neuroimaging/20190831_CVET/20190521_CVET"
 cd ${DIR}
 
