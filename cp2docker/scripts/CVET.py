@@ -179,7 +179,9 @@ if __name__ == "__main__":
 
         # ** 01 FreeSurfer
         # Only run FreeSurfer if no FreeSurfer folder was mounted
-        if FSOPT == 1:
+        # or if there was a FreeSurfer folder mounted, but
+        # '--makelocalcopy' was set.
+        if FSOPT == 1 or (FSOPT == 0 and args.makelocalcopy == 1):
 
             # *** Announce
             print('               +----------> Run FreeSurfer')
@@ -221,7 +223,8 @@ if __name__ == "__main__":
             '-n', str(SESN),
             '-f', str(FSOPT),
             '-c', str(args.n_cpus),
-            '-i', str(args.intermediate_files)
+            '-i', str(args.intermediate_files),
+            '-l', str(args.makelocalcopy)
         ]
 
         # *** Start script
@@ -248,7 +251,8 @@ if __name__ == "__main__":
                 '-n', str(SESN),
                 '-f', str(FSOPT),
                 '-m', str(args.segment),
-                '-i', str(args.intermediate_files)
+                '-i', str(args.intermediate_files),
+                '-l', str(args.makelocalcopy)
             ]
 
             # **** Start script
@@ -275,7 +279,8 @@ if __name__ == "__main__":
                 '-n', str(SESN),
                 '-f', str(FSOPT),
                 '-m', str(args.segment),
-                '-i', str(args.intermediate_files)
+                '-i', str(args.intermediate_files),
+                '-l', str(args.makelocalcopy)
             ]
 
             # **** Start script

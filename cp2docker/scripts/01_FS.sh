@@ -76,11 +76,15 @@ EOF
                -iname "sub-${SID}*"
         )
     )
+
+    # ** Temoprary Storage Folder within Container
+    tDIR=/data/tmp/01_FreeSurfer
+    mkdir -p ${tDIR}
     
     # ** Copy data
     # Loop over folders
     for subFolder in ${subFolders[@]}; do
-        cp -r ${subFolder} ${oDIR}
+        cp -r ${subFolder} ${tDIR}
     done
 
     # ** Done

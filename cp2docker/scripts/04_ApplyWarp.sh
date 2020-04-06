@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Input arguments
-while getopts "s:t:n:f:m:i:r:" OPTION
+# * Input arguments
+while getopts "s:t:n:f:m:i:l:r:" OPTION
 do
      case $OPTION in
          s)
@@ -22,6 +22,9 @@ do
          i)
              INTERMEDIATE=$OPTARG
              ;;
+         l)
+             LOCALCOPY=${OPTARG}
+             ;;
          r)
              REPORT=$OPTARG
              ;;
@@ -33,7 +36,7 @@ done
 
 
 
-# Logging
+# * Logging
 cat <<EOF
 ##############################################################
 ### Cerebellar Volume Extraction Tool (CVET)               ###
@@ -55,17 +58,20 @@ oDIR=/data/out/04_ApplyWarp/sub-${SID}/ses-${SES}
 mkdir -p ${oDIR}
 tDIR="/software/SUIT-templates"
 
-# Set FreeSurfer data location
+# * Set FreeSurfer data location
 if [ ${FSDATA} -eq 0 ]; then
-    FSDATADIR=/freesurfer
+    if [ ${LOCALCOPY=1} ]; then
+        FSDATADIR=/data/tmp/01_FreeSurfer
+    elif [ ${LOCALCOPY=0} ]; then
+        FSDATADIR=/freesurfer
+    fi
 elif [ ${FSDATA} -eq 1 ]; then
-    FSDATADIR=/data/out/01_FreeSurfer
+     FSDATADIR=/data/out/01_FreeSurfer
 fi
 
 
 
-# Apply warps to bring the SUIT atlas into subject
-# native space. 
+# * Apply warps to bring the SUIT atlas into subject native space. 
 cat <<EOF
 ##############################################################
 ### Apply the inverse of the warp parameters to bring the  ###
@@ -116,7 +122,7 @@ CLIST=( $(find ${iDIR21}/.. -iname "sub-${SID}_ses-*_ccereb.nii.gz" | sort) )
 # transformations later.
 if [ ${#CLIST[@]} -gt 1 ]; then
 
-    # Convert transformation
+    # ** Convert transformation
     FS_transform=${FSDIR}/mri/transforms/sub-${SID}_ses-${SES}_to_sub-${SID}_ses-${SES}.long.sub-${SID}.lta
     ANTs_transform=${oDIR}/sub-${SID}_ses-${SES}_to_sub-${SID}_ses-${SES}.long.sub-${SID}.txt
     lta_convert \
@@ -133,7 +139,7 @@ fi
 
 
 
-# Apply the transformations to bring the cerebellar atlas into native (rawavg) space
+# * Apply the transformations to bring the cerebellar atlas into native (rawavg) space
 antsApplyTransforms \
     -d 3 \
     -i ${tDIR}/Cerebellum-SUIT.nii.gz \
@@ -147,7 +153,7 @@ antsApplyTransforms \
     --float \
     -v
 
-#  Calculate SPM12's / ANTs Atropos' ICV
+# * Calculate SPM12's / ANTs Atropos' ICV
 if [ ${METHOD} = "A" ]; then BMASK=ANTsBrainMask.nii.gz; BMlabel=ANTsICV; fi
 if [ ${METHOD} = "S" ]; then BMASK=SPMbrainMask.nii.gz;  BMlabel=SPMICV; fi
 
@@ -227,7 +233,7 @@ fslmaths \
     ${oDIR}/cgm.nii.gz
 
 
-# Refine atlas by masking with FreeSufer cerebellar mask
+# * Refine atlas by masking with FreeSufer cerebellar mask
 fslmaths \
     ${oDIR}/atlasNativeSpace.nii.gz \
     -mas ${cerebMask} \
@@ -235,7 +241,7 @@ fslmaths \
 
 
 
-# Extract volume per lobule for all regions
+# * Extract volume per lobule for all regions
 echo "Extract volume per lobule for all regions"
 # The following code extracts a list of the mask values
 # of each of the lobules in the atlas.
@@ -260,7 +266,7 @@ listMeanVal=$(fslstats \
 	          ${oDIR}/cgm.nii.gz \
 	          -m)
 
-# Get the number of voxels per cluster.
+# * Get the number of voxels per cluster.
 listNumVox=$(fslstats \
 	         -K ${oDIR}/c_atlasNativeSpace.nii.gz \
 	         ${oDIR}/c_atlasNativeSpace.nii.gz \
@@ -278,12 +284,13 @@ lobVols=$(
         | sed 's/,$//g'
        )
 
-# Write this info out to a file
+# * Write this info out to a file
 oFile=${oDIR}/sub-${SID}_ses-${SES}_cGM.csv
-# List of lobule names
+
+# * List of lobule names
 lNames="l_I_IV,r_I_IV,l_V,r_V,l_VI,v_VI,r_VI,l_CrusI,v_CrusI,r_CrusI,l_CrusII,v_CrusII,r_CrusII,l_VIIb,v_VIIb,r_VIIb,l_VIIIa,v_VIIIa,r_VIIIa,l_VIIIb,v_VIIIb,r_VIIIb,l_IX,v_IX,r_IX,l_X,v_X,r_X"
 
-# Write out Header and Data
+# * Write out Header and Data
 echo SUB,SES,${lNames},${BMlabel},eTIV | sed 's/  *//g' > ${oFile}
 echo ${SID},${SES},${lobVols},${BMICV},${eTIV} | sed -e 's/  *//g' -e 's/,$//g' >> ${oFile}
 
@@ -330,20 +337,30 @@ antsApplyTransforms \
     --float \
     -v
 
-# Calculate the Jacobian
+# * Calculate the Jacobian
+# The Jacobian is calculated only on the basis
+# of the non-linear part of the transformation.
+# The affine part is not included. This way,
+# you don't need to adjust for ICV when doing
+# a VBM style analysis. However, CAT12's manual
+# now suggest that it is more accurate to include
+# the affine part in the Jacobian determinant and
+# adjust for ICV in your statistical model. I need
+# to implement that here.
 CreateJacobianDeterminantImage \
     3 \
     ${iDIR23}/ants_1Warp.nii.gz \
     ${oDIR}/Jacobian.nii.gz
 
-# Multiply the Jacobian determinant with the warped GM map
+# * Multiply the Jacobian determinant with the warped GM map
 fslmaths \
     ${oDIR}/wcgm.nii.gz \
     -mul ${oDIR}/Jacobian.nii.gz \
     ${oDIR}/mwcgm.nii.gz
 
 # 4mm FWHM smoothing for cerebellum: https://www.haririlab.com/methods/vbm.html
-# Mask (cerebellum) en Smooth de GM map; FWMH ~= sigma * 2.35; 4mm FWHM = sigma(4/2.35); sigma= 1.70
+# Mask (cerebellum) en Smooth de GM map
+# FWMH ~= sigma * 2.35; 4mm FWHM = sigma(4/2.35); sigma= 1.70
 fslmaths \
     ${oDIR}/mwcgm.nii.gz \
     -mas ${tDIR}/maskSUIT.nii.gz \
@@ -352,10 +369,10 @@ fslmaths \
 
 
 
-# Clean up intermediate files
+# * Clean up intermediate files
 if [ ${INTERMEDIATE} -eq 0 ]; then
 
-    # Announce
+    # ** Announce
     echo "REMOVING INTERMEDIATE FILES..."
 
     rm -vf \

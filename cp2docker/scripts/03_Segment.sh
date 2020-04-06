@@ -3,7 +3,7 @@
 # This script segments the whole brain into a GM tissue class using SPM12 or ANTs Atropos
 
 # * Input arguments
-while getopts "s:t:n:f:m:i:r:" OPTION
+while getopts "s:t:n:f:m:i:l:r:" OPTION
 do
      case $OPTION in
          s)
@@ -23,6 +23,9 @@ do
              ;;
          i)
              INTERMEDIATE=$OPTARG
+             ;;
+         l)
+             LOCALCOPY=${OPTARG}
              ;;
          r)
              REPORT=$OPTARG
@@ -50,15 +53,18 @@ EOF
 # * Environment
 tDIR=/software/SPM-templates
 pDIR=/software/TissuePriors
-iDIR=/data/out/01_FreeSurfer/sub-${SID}/ses-${SES}/
 oDIR=/data/out/03_Segment/sub-${SID}/ses-${SES}
 mkdir -p ${oDIR}
 
 # * Set FreeSurfer data location
 if [ ${FSDATA} -eq 0 ]; then
-    FSDATADIR=/freesurfer
+    if [ ${LOCALCOPY=1} ]; then
+        FSDATADIR=/data/tmp/01_FreeSurfer
+    elif [ ${LOCALCOPY=0} ]; then
+        FSDATADIR=/freesurfer
+    fi
 elif [ ${FSDATA} -eq 1 ]; then
-    FSDATADIR=/data/out/01_FreeSurfer
+     FSDATADIR=/data/out/01_FreeSurfer
 fi
 
 
