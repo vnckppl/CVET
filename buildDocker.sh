@@ -10,6 +10,10 @@ DIR="/Users/vincent/Data/Documents/Utah/Kladblok/20171002_Neuroimaging/20190831_
 cd ${DIR}
 
 
+# * Announce
+echo "CVET v${version}"
+
+
 # * Build Docker
 read -p "Do you want to build this docker (y/n)? " ANS
 
