@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-# Libraries
+# * Libraries
 import sys
 import argparse
 import os
@@ -18,8 +18,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-
-# Input arguments
+# * Input arguments
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Cerebellar Volume Extraction Tool. Create quality '
@@ -30,108 +29,108 @@ if __name__ == "__main__":
                         required=True)
 
 args = parser.parse_args()
-SID=args.SID
+SID = args.SID
 
-# Function to compile two svg images into animations
+
+# * Function to compile two svg images into animations
 def compileSVG(DIR, svg1, svg2, outSVG):
 
-    # Open the top svg image and remove svg tag from text file
+    # ** Open the top svg image and remove svg tag from text file
     with open(svg2, 'r') as f:
         lines = f.read().splitlines()
-        
-        # Everything but last line
+
+        # *** Everything but last line
         myLines = lines[:-1]
-        
+
         # Remove black background from image
         # All lines between    <g id="patch_1">
         #                      <g id="axes_2">
         # Find line number of lines
         for line in range(0, len(myLines)):
-            
+
             # Test if a line contains the string ' <g id="patch_1">'
             # If so, store this line number
-            regex=re.compile('  <g id="patch_1">')
+            regex = re.compile('  <g id="patch_1">')
             if re.match(regex, myLines[line]):
-                start=line
-                
+                start = line
+
             # Test if a line contains the string ' <g id="axes_2">'
             # If so, store this line number
-            regex=re.compile('  <g id="axes_2">')
+            regex = re.compile('  <g id="axes_2">')
             if re.match(regex, myLines[line]):
-                stop=line
-            
-        # Remove the lines between start and stop
+                stop = line
+
+        # *** Remove the lines between start and stop
         myLines = myLines[:start] + myLines[stop:]
-            
-        # Extract image dimensions
-        regex=re.compile('<svg height')
-        matches=[string for string in myLines if re.match(regex, string)]
-        myParameters=str(matches).split(' ')
-        # Height
-        regex=re.compile('height')
-        height=[string for string in myParameters if re.match(regex, string)]
-        height=str(height).split('"')[1]
-        # Weight
-        regex=re.compile('width')
-        width=[string for string in myParameters if re.match(regex, string)]
-        width=str(width).split('"')[1]
-        
-        # Convert this list back to a string with new lines
-        myStringLines=""
+
+        # *** Extract image dimensions
+        regex = re.compile('<svg height')
+        matches = [string for string in myLines if re.match(regex, string)]
+        myParameters = str(matches).split(' ')
+        # *** Height
+        regex = re.compile('height')
+        height = [string for string in myParameters if re.match(regex, string)]
+        height = str(height).split('"')[1]
+        # *** Weight
+        regex = re.compile('width')
+        width = [string for string in myParameters if re.match(regex, string)]
+        width = str(width).split('"')[1]
+
+        # *** Convert this list back to a string with new lines
+        myStringLines = ""
         for line in myLines:
-            myStringLines=myStringLines+str(line)+"\n"
-    
-    
-    # Open the top svg image and create an animations svg snippet for each png in the file
+            myStringLines = myStringLines + str(line) + "\n"
+
+    # ** Open the top svg image and create an animations svg snippet for each png in the file
     with open(svg2, 'r') as f:
-        # Create list from 'words' separated by a space
+        # *** Create list from 'words' separated by a space
         content = f.read()
-        myList=content.split(" ")
-        
-        # Find all image IDs
-        regex=re.compile('id="image')
-        matches=[string for string in myList if re.match(regex, string)]
+        myList = content.split(" ")
+
+        # *** Find all image IDs
+        regex = re.compile('id="image')
+        matches = [string for string in myList if re.match(regex, string)]
         matches
-        
-        # Create new strings with animation information in svg format
+
+        # *** Create new strings with animation information in svg format
         for match in matches:
-            
+
             myString = f"""
-            
+
             <animate href="#{match[4:]}
                      attributeName="opacity"
                      values="0;0;1;1;0" dur="5s"
                      repeatCount="indefinite"
                      />"
             """
-            #print(myString)
-            
-            # Append string to svg image
-            myStringLines = myStringLines+myString
-            
-        # Add closing svg tag
+
+            # **** Append string to svg image
+            myStringLines = myStringLines + myString
+
+        # *** Add closing svg tag
         myStringLines = myStringLines + '</svg>'
-            
-    # Save to file
-    tmpSVG=DIR+'/tmp.svg'
+
+    # ** Save to file
+    tmpSVG = DIR + '/tmp.svg'
     with open(tmpSVG, "w") as text_file:
         text_file.write(str(myStringLines))
-        
-    # Combine images
-    sc.Figure(width, height,
-        sc.Panel(sc.SVG(svg1)),
-        sc.Panel(sc.SVG(tmpSVG))
-        ).save(outSVG)
-    
-    # Clean up
+
+    # ** Combine images
+    sc.Figure(width,
+              height,
+              sc.Panel(sc.SVG(svg1)),
+              sc.Panel(sc.SVG(tmpSVG))
+              ).save(outSVG)
+
+    # ** Clean up
     os.remove(tmpSVG)
 
 
-# Date for logging
+# * Date for logging
 now = datetime.datetime.now()
 now = now.isoformat()
 
-# Logging
+# * Logging
 message = f"""
 ##############################################################
 ### Cerebellar Volume Extraction Tool (CVET)               ###
@@ -143,25 +142,23 @@ message = f"""
 """
 print(message)
 
-# Environment
-iDIR2='/data/out/02_Template/sub-'+SID
-iDIR22=iDIR2+'/02_SubjectTemplate'
-iDIR23=iDIR2+'/03_SUITTemplate'
-iDIR3='/data/out/03_Segment/sub-'+SID
-iDIR4='/data/out/04_ApplyWarp/sub-'+SID
-oDIR='/data/out/05_Report/sub-'+SID
+# * Environment
+iDIR2 = '/data/out/02_Template/sub-' + SID
+iDIR22 = iDIR2 + '/02_SubjectTemplate'
+iDIR23 = iDIR2 + '/03_SUITTemplate'
+iDIR3 = '/data/out/03_Segment/sub-' + SID
+iDIR4 = '/data/out/04_ApplyWarp/sub-' + SID
+oDIR = '/data/out/05_Report/sub-' + SID
 os.makedirs(oDIR, exist_ok=True)
-tDIR='/software/SUIT-templates'
+tDIR = '/software/SUIT-templates'
 
 
-# List of sessions
-SESLIST=sorted(glob(iDIR4+'/*'))
-SESLIST=[i.split('ses-',1)[1] for i in SESLIST]
+# * List of sessions
+SESLIST = sorted(glob(iDIR4 + '/*'))
+SESLIST = [i.split('ses-', 1)[1] for i in SESLIST]
 
 
-
-
-# Prepare images for display
+# * Prepare images for display
 message = f"""
 ##############################################################
 ### Prepare images for display                             ###
@@ -171,53 +168,53 @@ message = f"""
 print(message)
 
 for SES in SESLIST:
-    
-    # Set output folder
-    oDIRc=oDIR+'/ses-'+SES
+
+    # ** Set output folder
+    oDIRc = oDIR + '/ses-' + SES
     os.makedirs(oDIRc, exist_ok=True)
-    
-    # Reortient cerebellar to standard space
+
+    # ** Reortient cerebellar to standard space
     print("Reorient cerebellar mask to standard space")
-    iFile=glob(iDIR4+'/ses-'+SES+'/cMask*.nii.gz')
-    oFile=oDIRc+'/cMask.nii.gz'
-    
+    iFile = glob(iDIR4 + '/ses-' + SES + '/cMask*.nii.gz')
+    oFile = oDIRc + '/cMask.nii.gz'
+
     myObject = fsl.Reorient2Std()
     myObject.inputs.in_file = iFile[0]
     myObject.inputs.out_file = oFile
     results = myObject.run()
-    
-    # Dilate cerebellar mask twice to make sure the entire 
+
+    # Dilate cerebellar mask twice to make sure the entire
     # cerebellum will be covered in the screenshots
     print("Dilate cerebellar mask")
-    iFile=oDIRc+'/cMask.nii.gz'
-    oFile=oDIRc+'/cMask_dilM2.nii.gz'
-    
+    iFile = oDIRc + '/cMask.nii.gz'
+    oFile = oDIRc + '/cMask_dilM2.nii.gz'
+
     myObject = fsl.ImageMaths(
         in_file=iFile,
-        op_string= '-dilM -dilM',
+        op_string='-dilM -dilM',
         out_file=oFile
     )
     results = myObject.run()
-    
-    # Crop the dilated cerebellar mask for display
+
+    # ** Crop the dilated cerebellar mask for display
     print("Crop cerebellar mask to mask borders")
-    
-    iFile=oDIRc+'/cMask_dilM2.nii.gz'
-    oFile=oDIRc+'/ccMask_dilM2.nii.gz'
-    
+
+    iFile = oDIRc + '/cMask_dilM2.nii.gz'
+    oFile = oDIRc + '/ccMask_dilM2.nii.gz'
+
     myObject = fsl.ImageStats(
         in_file=iFile,
         op_string='-w',
         terminal_output='allatonce'
     )
-    
+
     results = myObject.run()
-    # Store parameters
-    cropParameters=results.outputs.out_stat
-    # Convert to integers
+    # ** Store parameters
+    cropParameters = results.outputs.out_stat
+    # ** Convert to integers
     cp = [round(x) for x in cropParameters]
-    
-    # fslroi
+
+    # ** fslroi
     myObject = fsl.ExtractROI(
         in_file=iFile,
         x_min=cp[0],
@@ -230,37 +227,36 @@ for SES in SESLIST:
         t_size=cp[7],
         roi_file=oFile
     )
-    
-    results = myObject.run()    
-    
-    # Reslice other images like the cropped image to match its dimensions
-    Ifiles=[
-        iDIR3+'/ses-'+SES+'/sub-'+SID+'_ses-'+SES+'_rawavg_N4.nii.gz',
-        iDIR4+'/ses-'+SES+'/cgm.nii.gz',
-        iDIR4+'/ses-'+SES+'/c_atlasNativeSpace.nii.gz'
+
+    results = myObject.run()
+
+    # ** Reslice other images like the cropped image to match its dimensions
+    Ifiles = [
+        iDIR3 + '/ses-' + SES + '/sub-' + SID + '_ses-' + SES + '_rawavg_N4.nii.gz',
+        iDIR4 + '/ses-' + SES + '/cgm.nii.gz',
+        iDIR4 + '/ses-' + SES + '/c_atlasNativeSpace.nii.gz'
     ]
-    
-    Ofiles=[
-        oDIRc+'/T1.nii.gz',
-        oDIRc+'/gm.nii.gz',
-        oDIRc+'/atlas.nii.gz'
+
+    Ofiles = [
+        oDIRc + '/T1.nii.gz',
+        oDIRc + '/gm.nii.gz',
+        oDIRc + '/atlas.nii.gz'
     ]
-    
+
     for file in range(len(Ifiles)):
-        
-        # Announce
-        print('Reslice: '+Ifiles[file])
-        # Reslice
+
+        # ** Announce
+        print('Reslice: ' + Ifiles[file])
+        # ** Reslice
         myObject = MRIConvert()
-        myObject.inputs.in_file=Ifiles[file]
-        myObject.inputs.out_file=Ofiles[file]
-        myObject.inputs.reslice_like=oDIRc+'/ccMask_dilM2.nii.gz'
-        
+        myObject.inputs.in_file = Ifiles[file]
+        myObject.inputs.out_file = Ofiles[file]
+        myObject.inputs.reslice_like = oDIRc + '/ccMask_dilM2.nii.gz'
+
         results = myObject.run()
 
 
-
-# Create overview of GM map for each subject/session
+# * Create overview of GM map for each subject/session
 message = f"""
 ##############################################################
 ### Create overview of GM segmentation                     ###
@@ -269,7 +265,7 @@ message = f"""
 """
 print(message)
 
-# HTML Header
+# * HTML Header
 html = f"""
 <!DOCTYPE html>
 <html>
@@ -309,149 +305,148 @@ html = f"""
     <h1><b>CVET Report for Subject {SID}</b></h1>
 """
 
-# Set number of slices to display per plane
-nX=7
-nY=7
-nZ=7
+# * Set number of slices to display per plane
+nX = 7
+nY = 7
+nZ = 7
 
-# Loop over all sessions
+# * Loop over all sessions
 for SES in SESLIST:
 
-    # Announce
-    print('------------------- Working on session: '+SES)
+    # ** Announce
+    print('------------------- Working on session: ' + SES)
 
-    # Export session name to HTML
-    html=html+f"""
+    # ** Export session name to HTML
+    html = html + f"""
     <h1>Session: {SES}</h1>
     """
-    
-    # Set output folder
-    oDIRc=oDIR+'/ses-'+SES
-    
-    # Get image dimensions of T1 image
-    T1=nb.load(oDIRc+'/T1.nii.gz')
-    
-    # Calculate the cut points for the screenshots
-    cut_distance_X=T1.shape[0] / (nX + 1)
-    cut_distance_Y=T1.shape[1] / (nY + 1)
-    cut_distance_Z=T1.shape[2] / (nZ + 1)
-    
-    # Convert the cut distances to a list of cut points
-    cutpoints_X = [cut_distance_X * x for x in range(1,nX+1)]
-    cutpoints_Y = [cut_distance_Y * x for x in range(1,nY+1)]
-    cutpoints_Z = [cut_distance_Z * x for x in range(1,nZ+1)]
-    
-    # Convert these image coordinates to mm coordinates
+    # ** Set output folder
+    oDIRc = oDIR + '/ses-' + SES
+
+    # ** Get image dimensions of T1 image
+    T1 = nb.load(oDIRc + '/T1.nii.gz')
+
+    # ** Calculate the cut points for the screenshots
+    cut_distance_X = T1.shape[0] / (nX + 1)
+    cut_distance_Y = T1.shape[1] / (nY + 1)
+    cut_distance_Z = T1.shape[2] / (nZ + 1)
+
+    # ** Convert the cut distances to a list of cut points
+    cutpoints_X = [cut_distance_X * x for x in range(1, nX + 1)]
+    cutpoints_Y = [cut_distance_Y * x for x in range(1, nY + 1)]
+    cutpoints_Z = [cut_distance_Z * x for x in range(1, nZ + 1)]
+
+    # ** Convert these image coordinates to mm coordinates
     cutpoints_X_mm = [nilearn.image.coord_transform(x, 0, 0, T1.affine)[0] for x in cutpoints_X]
     cutpoints_Y_mm = [nilearn.image.coord_transform(0, x, 0, T1.affine)[1] for x in cutpoints_Y]
     cutpoints_Z_mm = [nilearn.image.coord_transform(0, 0, x, T1.affine)[2] for x in cutpoints_Z]
-    
-    # Create screenshots
-    for plane in ['X','Y','Z']:
 
-        # Announce
-        print('--------------------------------------- PLANE: '+plane)
-        
-        # T1 image
+    # ** Create screenshots
+    for plane in ['X', 'Y', 'Z']:
+
+        # *** Announce
+        print('--------------------------------------- PLANE: ' + plane)
+
+        # *** T1 image
         print('--------------------------------------- T1 image')
         nilearn.plotting.plot_img(
-            T1, 
+            T1,
             display_mode=plane.lower(),
-            cut_coords= eval('cutpoints_'+plane+'_mm'),
+            cut_coords=eval('cutpoints_' + plane + '_mm'),
             cmap='gray',
-            output_file=oDIRc+'/T1_'+plane+'.svg'
+            output_file=oDIRc + '/T1_' + plane + '.svg'
         )
-        
-        
-        # Gray matter map
+
+        # *** Gray matter map
         print('--------------------------------------- Gray Matter map')
-        GMimg=nb.load(oDIRc+'/gm.nii.gz')
-        
+        GMimg = nb.load(oDIRc + '/gm.nii.gz')
+
         for alpha in [0.0, 1.0]:
             plotting.plot_stat_map(
-                GMimg, 
-                bg_img=T1, 
+                GMimg,
+                bg_img=T1,
                 display_mode=plane.lower(),
-                cut_coords= eval('cutpoints_'+plane+'_mm'),
+                cut_coords=eval('cutpoints_' + plane + '_mm'),
                 threshold=0.05,
                 alpha=alpha,
                 dim=-1,
-                output_file=oDIRc+'/GM_'+plane+'_'+str(alpha)+'.svg'
+                output_file=oDIRc + '/GM_' + plane + '_' + str(alpha) + '.svg'
             )
-        
-        # Create GM animation
-        svg1=oDIRc+'/GM_'+plane+'_0.0.svg'
-        svg2=oDIRc+'/GM_'+plane+'_1.0.svg'
-        outSVG=oDIRc+'/GM_'+plane+'.svg'
+
+        # *** Create GM animation
+        svg1 = oDIRc + '/GM_' + plane + '_0.0.svg'
+        svg2 = oDIRc + '/GM_' + plane + '_1.0.svg'
+        outSVG = oDIRc + '/GM_' + plane + '.svg'
         compileSVG(oDIR, svg1, svg2, outSVG)
-        
-        # Clean up
+
+        # *** Clean up
         os.remove(svg1)
         os.remove(svg2)
-        
-        
-        # SUIT altas
+
+        # *** SUIT altas
         print('--------------------------------------- SUIT Atlas')
-        atlas=nb.load(oDIRc+'/atlas.nii.gz')
-        
+        atlas = nb.load(oDIRc + '/atlas.nii.gz')
+
         for alpha in [0.0, 1.0]:
             plotting.plot_roi(
-                atlas, 
-                bg_img=T1, 
+                atlas,
+                bg_img=T1,
                 display_mode=plane.lower(),
-                cut_coords= eval('cutpoints_'+plane+'_mm'),
+                cut_coords=eval('cutpoints_' + plane + '_mm'),
                 alpha=alpha,
-                output_file=oDIRc+'/SUIT_atlas_'+plane+'_'+str(alpha)+'.svg',
+                output_file=oDIRc + '/SUIT_atlas_' + plane + '_' + str(alpha) + '.svg',
             )
-            
-        # Create GM animation
-        svg1=oDIRc+'/SUIT_atlas_'+plane+'_0.0.svg'
-        svg2=oDIRc+'/SUIT_atlas_'+plane+'_1.0.svg'
-        outSVG=oDIRc+'/SUIT_atlas_'+plane+'.svg'
+
+        # *** Create GM animation
+        svg1 = oDIRc + '/SUIT_atlas_' + plane + '_0.0.svg'
+        svg2 = oDIRc + '/SUIT_atlas_' + plane + '_1.0.svg'
+        outSVG = oDIRc + '/SUIT_atlas_' + plane + '.svg'
         compileSVG(oDIR, svg1, svg2, outSVG)
-        
-        # Clean up
+
+        # *** Clean up
         os.remove(svg1)
         os.remove(svg2)
-        
-    # Add Screenshots to HTML: T1 images
-    html=html+f"""
+
+    # ** Add Screenshots to HTML: T1 images
+    html = html + f"""
     <h2>T1 overview</h2>
     <div class="imgbox">
     """
-    for plane in ['X','Y','Z']:
-        html=html+f"""
+    for plane in ['X', 'Y', 'Z']:
+        html = html + f"""
         <img class="img" src="./ses-{SES}/T1_{plane}.svg">
         """
-    html=html+f"""
+    html = html + f"""
     </div>
     """
-    # Add Screenshots to HTML: GM overlay images
-    html=html+f"""
+
+    # ** Add Screenshots to HTML: GM overlay images
+    html = html + f"""
     <h2>GM overlay</h2>
     <div class="imgbox">
     """
-    for plane in ['X','Y','Z']:
-        html=html+f"""
+    for plane in ['X', 'Y', 'Z']:
+        html = html + f"""
         <img class="img" src="./ses-{SES}/GM_{plane}.svg">
         """
-    html=html+f"""
+    html = html + f"""
     </div>
     """
-    # Add Screenshots to HTML: SUIT atlas overlay images
-    html=html+f"""
+
+    # ** Add Screenshots to HTML: SUIT atlas overlay images
+    html = html + f"""
     <h2>SUIT atlas parcellation</h2>
     <div class="imgbox">
     """
-    for plane in ['X','Y','Z']:
-        html=html+f"""
+    for plane in ['X', 'Y', 'Z']:
+        html = html + f"""
         <img class="img" src="./ses-{SES}/SUIT_atlas_{plane}.svg">
         """
-    html=html+f"""
+    html = html + f"""
     </div>
     """
-    
-# Create overview of the subject template 
+
+# * Create overview of the subject template
 message = f"""
 ##############################################################
 ### Create overview of the Subject Template                ###
@@ -460,119 +455,120 @@ message = f"""
 """
 print(message)
 
-# Template creation (only if there is more than one time point)
+# * Template creation
+# (only if there is more than one time point)
 if len(SESLIST) > 1:
 
-    # Export to HTML
-    html=html+f"""
+    # ** Export to HTML
+    html = html + f"""
     <h1>Subject Template</h1>
     """
-    
-    # Create output folder
-    oDIRt=oDIR+'/template'
+
+    # ** Create output folder
+    oDIRt = oDIR + '/template'
     os.makedirs(oDIRt, exist_ok=True)
-    
-    # Reorient template image to standard space
+
+    # ** Reorient template image to standard space
     reorient = fsl.Reorient2Std()
-    reorient.inputs.in_file = iDIR22+'/T_template0.nii.gz'
-    reorient.inputs.out_file = oDIRt+'/ro_T_template0.nii.gz'
+    reorient.inputs.in_file = iDIR22 + '/T_template0.nii.gz'
+    reorient.inputs.out_file = oDIRt + '/ro_T_template0.nii.gz'
     ro = reorient.run()
-    
-    # Get image dimensions of Subject Template image
-    ST=nb.load(oDIRt+'/ro_T_template0.nii.gz')
-    
-    # Calculate the cut points for the screenshots
-    cut_distance_X=ST.shape[0] / (nX + 1)
-    cut_distance_Y=ST.shape[1] / (nY + 1)
-    cut_distance_Z=ST.shape[2] / (nZ + 1)
+
+    # ** Get image dimensions of Subject Template image
+    ST = nb.load(oDIRt + '/ro_T_template0.nii.gz')
+
+    # ** Calculate the cut points for the screenshots
+    cut_distance_X = ST.shape[0] / (nX + 1)
+    cut_distance_Y = ST.shape[1] / (nY + 1)
+    cut_distance_Z = ST.shape[2] / (nZ + 1)
     print(cut_distance_X)
     print(cut_distance_Y)
     print(cut_distance_Z)
-    
-    # Convert the cut distances to a list of cut points
-    cutpoints_X = [cut_distance_X * x for x in range(1,nX+1)]
-    cutpoints_Y = [cut_distance_Y * x for x in range(1,nY+1)]
-    cutpoints_Z = [cut_distance_Z * x for x in range(1,nZ+1)]
+
+    # ** Convert the cut distances to a list of cut points
+    cutpoints_X = [cut_distance_X * x for x in range(1, nX + 1)]
+    cutpoints_Y = [cut_distance_Y * x for x in range(1, nY + 1)]
+    cutpoints_Z = [cut_distance_Z * x for x in range(1, nZ + 1)]
     print(cutpoints_X)
     print(cutpoints_Y)
     print(cutpoints_Z)
-    
-    # Convert these image coordinates to mm coordinates   
+
+    # ** Convert these image coordinates to mm coordinates
     cutpoints_X_mm = [nilearn.image.coord_transform(x, 0, 0, ST.affine)[0] for x in cutpoints_X]
     cutpoints_Y_mm = [nilearn.image.coord_transform(0, x, 0, ST.affine)[1] for x in cutpoints_Y]
     cutpoints_Z_mm = [nilearn.image.coord_transform(0, 0, x, ST.affine)[2] for x in cutpoints_Z]
     print(cutpoints_X_mm)
     print(cutpoints_Y_mm)
     print(cutpoints_Z_mm)
-    
-    # Create list of ST image and all time point images
-    myList = [iDIR22+'/T_template0.nii.gz']
+
+    # ** Create list of ST image and all time point images
+    myList = [iDIR22 + '/T_template0.nii.gz']
     myFname = ['Template']
     for SES in SESLIST:
-        myList.append(glob(iDIR22+'/T_template0sub-'+SID+'_ses-'+SES+'_ccereb*WarpedToTemplate.nii.gz')[0])
+        myList.append(glob(iDIR22 + '/T_template0sub-' + SID + '_ses-' + SES + '_ccereb*WarpedToTemplate.nii.gz')[0])
         myFname.append(SES)
-        
+
     print(myList)
-    
-    # Loop over images in list
+
+    # ** Loop over images in list
     for i in range(len(myList)):
-        
-        # Announce
-        print('--------------------------------------- Template: '+str(myFname[i]))
-        
-        # Export to HTML
-        TP=str(myFname[i])
+
+        # *** Announce
+        print('--------------------------------------- Template: ' + str(myFname[i]))
+
+        # *** Export to HTML
+        TP = str(myFname[i])
         if i > 0:
-            html=html+f"""
+            html = html + f"""
             <h2>Session {TP} to Subject Template</h2>
             <div class="imgbox">
             """
-        
-        # Create screenshots
-        for plane in ['X','Y','Z']:
-            
-            # Announce
-            print('--------------------------------------- PLANE: '+plane)
-            fileToPlot=nb.load(str(myList[i]))
-            
-            print(oDIRt+'/T_'+str(myFname[i])+'_'+plane+'.svg')
-            
-            # Plot image
+
+        # *** Create screenshots
+        for plane in ['X', 'Y', 'Z']:
+
+            # **** Announce
+            print('--------------------------------------- PLANE: ' + plane)
+            fileToPlot = nb.load(str(myList[i]))
+
+            print(oDIRt + '/T_' + str(myFname[i]) + '_' + plane + '.svg')
+
+            # **** Plot image
             nilearn.plotting.plot_img(
-                fileToPlot, 
+                fileToPlot,
                 display_mode=plane.lower(),
-                cut_coords= eval('cutpoints_'+plane+'_mm'),
+                cut_coords=eval('cutpoints_' + plane + '_mm'),
                 cmap='gray',
-                output_file=oDIRt+'/T_'+str(myFname[i])+'_'+plane+'.svg',
-                title='Session: '+myFname[i]+'                '
+                output_file=oDIRt + '/T_' + str(myFname[i]) + '_' + plane + '.svg',
+                title='Session: ' + myFname[i] + '                '
             )
-            
-            # Create animations
+
+            # **** Create animations
             if i > 0:
-                
-                # Combine images
-                svg1=oDIRt+'/T_Template_'+plane+'.svg'
-                svg2=oDIRt+'/T_'+str(myFname[i])+'_'+plane+'.svg'
-                outSVG=oDIRt+'/T_'+str(myFname[i])+'_'+plane+'.svg'
+
+                # ***** Combine images
+                svg1 = oDIRt + '/T_Template_' + plane + '.svg'
+                svg2 = oDIRt + '/T_' + str(myFname[i]) + '_' + plane + '.svg'
+                outSVG = oDIRt + '/T_' + str(myFname[i]) + '_' + plane + '.svg'
                 compileSVG(oDIR, svg1, svg2, outSVG)
-                
-                # Clean up
-                #os.remove(svg2)
-                
-        # Export to HTML
+
+                # ***** Clean up
+                # os.remove(svg2)
+
+        # *** Export to HTML
         if i > 0:
-            for plane in ['X','Y','Z']:
-                html=html+f"""
+            for plane in ['X', 'Y', 'Z']:
+                html = html + f"""
                 <img class="img" src="./template/T_{TP}_{plane}.svg">
                 """
-            html=html+f"""
+            html = html + f"""
             </div>
             """
 else:
     print("Single session, no subject template was created")
 
 
-# Normalization from subject template to SUIT
+# * Normalization from subject template to SUIT
 message = f"""
 ##############################################################
 ### Create overview of template normalization to SUIT      ###
@@ -581,97 +577,95 @@ message = f"""
 """
 print(message)
 
-# Export to HTML
-html=html+f"""
+# * Export to HTML
+html = html + f"""
 <h1>Normalization from Subject Session Space via Subject Template Space to SUIT Space</h1>
 """
 
-# Loop over all sessions
+# * Loop over all sessions
 for SES in SESLIST:
 
-    # Announce
-    print('------------------- Working on session: '+SES)
+    # ** Announce
+    print('------------------- Working on session: ' + SES)
 
-    # Export to HTML
-    html=html+f"""
+    # ** Export to HTML
+    html = html + f"""
     <h2>Session: {SES}</h2>
     <div class="imgbox">
     """
-    
-    # Set output folder
-    oDIRc=oDIR+'/ses-'+SES
-    
-    # Get image dimensions of T1 image
-    SUIT=nb.load(tDIR+'/SUIT.nii.gz')
-    
-    # Calculate the cut points for the screenshots
-    cut_distance_X=SUIT.shape[0] / (nX + 1)
-    cut_distance_Y=SUIT.shape[1] / (nY + 1)
-    cut_distance_Z=SUIT.shape[2] / (nZ + 1)
-    
-    # Convert the cut distances to a list of cut points
-    cutpoints_X = [cut_distance_X * x for x in range(1,nX+1)]
-    cutpoints_Y = [cut_distance_Y * x for x in range(1,nY+1)]
-    cutpoints_Z = [cut_distance_Z * x for x in range(1,nZ+1)]
-    
-    # Convert these image coordinates to mm coordinates
+
+    # ** Set output folder
+    oDIRc = oDIR + '/ses-' + SES
+
+    # ** Get image dimensions of T1 image
+    SUIT = nb.load(tDIR + '/SUIT.nii.gz')
+
+    # ** Calculate the cut points for the screenshots
+    cut_distance_X = SUIT.shape[0] / (nX + 1)
+    cut_distance_Y = SUIT.shape[1] / (nY + 1)
+    cut_distance_Z = SUIT.shape[2] / (nZ + 1)
+
+    # ** Convert the cut distances to a list of cut points
+    cutpoints_X = [cut_distance_X * x for x in range(1, nX + 1)]
+    cutpoints_Y = [cut_distance_Y * x for x in range(1, nY + 1)]
+    cutpoints_Z = [cut_distance_Z * x for x in range(1, nZ + 1)]
+
+    # ** Convert these image coordinates to mm coordinates
     cutpoints_X_mm = [nilearn.image.coord_transform(x, 0, 0, SUIT.affine)[0] for x in cutpoints_X]
     cutpoints_Y_mm = [nilearn.image.coord_transform(0, x, 0, SUIT.affine)[1] for x in cutpoints_Y]
     cutpoints_Z_mm = [nilearn.image.coord_transform(0, 0, x, SUIT.affine)[2] for x in cutpoints_Z]
 
-    # Create screenshots
-    for plane in ['X','Y','Z']:
-        
-        # Announce
-        print('--------------------------------------- PLANE: '+plane)
-        
-        # SUIT Template
+    # ** Create screenshots
+    for plane in ['X', 'Y', 'Z']:
+
+        # *** Announce
+        print('--------------------------------------- PLANE: ' + plane)
+
+        # *** SUIT Template
         print('--------------------------------------- T1 SUIT Template')
         nilearn.plotting.plot_img(
-            SUIT, 
+            SUIT,
             display_mode=plane.lower(),
-            cut_coords= eval('cutpoints_'+plane+'_mm'),
+            cut_coords=eval('cutpoints_' + plane + '_mm'),
             cmap='gray',
-            output_file=oDIRc+'/SUIT_'+plane+'.svg',
+            output_file=oDIRc + '/SUIT_' + plane + '.svg',
             title='SUIT Template'
         )
-        
-        # Subject Template normalized to SUIT space
+
+        # *** Subject Template normalized to SUIT space
         print('--------------------------------------- Subject Template to SUIT Template')
-        SUB2SUIT=nb.load(iDIR23+'/ants_warped.nii.gz')
-        
+        SUB2SUIT = nb.load(iDIR23 + '/ants_warped.nii.gz')
+
         nilearn.plotting.plot_img(
-            SUB2SUIT, 
+            SUB2SUIT,
             display_mode=plane.lower(),
-            cut_coords= eval('cutpoints_'+plane+'_mm'),
+            cut_coords=eval('cutpoints_' + plane + '_mm'),
             cmap='gray',
-            output_file=oDIRc+'/Sub2SUIT_'+plane+'.svg',
+            output_file=oDIRc + '/Sub2SUIT_' + plane + '.svg',
             title='Subject warped to SUIT Template'
         )
-        
-        # Create animations
-        svg1=oDIRc+'/SUIT_'+plane+'.svg'
-        svg2=oDIRc+'/Sub2SUIT_'+plane+'.svg'
-        outSVG=oDIRc+'/Sub2SUIT_'+plane+'_a.svg'
+
+        # *** Create animations
+        svg1 = oDIRc + '/SUIT_' + plane + '.svg'
+        svg2 = oDIRc + '/Sub2SUIT_' + plane + '.svg'
+        outSVG = oDIRc + '/Sub2SUIT_' + plane + '_a.svg'
         compileSVG(oDIR, svg1, svg2, outSVG)
-        
-        # Clean up
+
+        # *** Clean up
         os.remove(svg1)
         os.remove(svg2)
 
-
-    # Export to HTML
-    for plane in ['X','Y','Z']:
-        html=html+f"""
+    # ** Export to HTML
+    for plane in ['X', 'Y', 'Z']:
+        html = html + f"""
         <img class="img" src="./ses-{SES}/Sub2SUIT_{plane}_a.svg">
         """
-    html=html+f"""
+    html = html + f"""
     </div>
     """
 
 
-
-# Create Spaghetti Plot for ROI volumes
+# * Create Spaghetti Plot for ROI volumes
 message = f"""
 ##############################################################
 ### Create Spaghetti Plot for ROI volumes                  ###
@@ -680,70 +674,71 @@ message = f"""
 """
 print(message)
 
-# Spaghetti plot (only if there is more than one time point)
+# * Spaghetti plot
+# (only if there is more than one time point)
 if len(SESLIST) > 1:
 
-    # Export to HTML
-    html=html+f"""
+    # ** Export to HTML
+    html = html + f"""
     <h1>Cerebellar Lobule Volume Changes Over Time</h1>
     """
 
-    # List all data files
-    searchPattern=iDIR4+'/**/*csv*'
-    list=sorted(glob(searchPattern))
-    
-    # Append all data
+    # ** List all data files
+    searchPattern = iDIR4 + '/**/*csv*'
+    list = sorted(glob(searchPattern))
+
+    # ** Append all data
     data = pd.read_csv(list[0])
-    for i in range(1,len(list)):
-    
+    for i in range(1, len(list)):
+
         dataTmp = data.append(pd.read_csv(list[i]))
         data = dataTmp
-    
-    # Initialize the figure
+
+    # ** Initialize the figure
     plt.style.use('seaborn-darkgrid')
-    plt.figure(figsize=(12,12))
-    
-    # Font size
+    plt.figure(figsize=(12, 12))
+
+    # ** Font size
     plt.rcParams.update({'font.size': 9})
-    
-    # Create a color palette
+
+    # ** Create a color palette
     palette = plt.get_cmap('viridis', 33)
-     
-    # Multiple line plot
-    num=0
-    for column in data.drop(['SUB','SES'], axis=1):
-        num+=1
-     
-        # Find the right spot on the plot
-        plt.subplot(5,6, num)
-     
-        # Plot the lineplot
+
+    # ** Multiple line plot
+    num = 0
+    for column in data.drop(['SUB', 'SES'], axis=1):
+        num += 1
+
+        # *** Find the right spot on the plot
+        plt.subplot(5, 6, num)
+
+        # *** Plot the lineplot
         plt.plot(data['SES'], data[column], marker='', color=palette(num), linewidth=1.9, alpha=0.9, label=column)
-      
-        # Add title
-        plt.title(column, loc='left', fontsize=9, fontweight=0, color=palette(num) )
-     
-    # Improve spacing
+
+        # *** Add title
+        plt.title(column, loc='left', fontsize=9, fontweight=0, color=palette(num))
+
+    # ** Improve spacing
     plt.tight_layout()
-    
-    # Write out graph
-    oPlot=oDIR+"/ROIs_over_time.svg"
+
+    # ** Write out graph
+    oPlot = oDIR + "/ROIs_over_time.svg"
     plt.savefig(oPlot)
-    
-    # Add to html
-    html=html+f"""
+
+    # ** Add to html
+    html = html + f"""
     <div class="imgbox">
     <img class="img" src="./ROIs_over_time.svg">
     </div>
     """
 
-# Close html
-html=html+f"""
+# * Close html
+html = html + f"""
   </body>
 </html>
 """
 
-# Write out html
-webpage = open(oDIR+"/CVET_sub-"+SID+".html", "w")
+# * Write out html
+webpage = open(oDIR + "/CVET_sub-" + SID + ".html", "w")
 webpage.write("%s" % html)
 webpage.close()
