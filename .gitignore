@@ -8,5 +8,5 @@ runDocker_test.sh
 /cp2docker/ANTS-templates/
 /cp2docker/SPM-templates/
 /cp2docker/SUIT-templates/
-
+/cp2docker/FSL-templates/
 /Icon
