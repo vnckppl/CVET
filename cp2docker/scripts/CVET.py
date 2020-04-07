@@ -23,7 +23,8 @@ if __name__ == "__main__":
                         'level in this folder).')
     parser.add_argument('out_dir',
                         help='Results are put into {out_dir}/CVET.')
-    parser.add_argument('analysis_level', help='Processing stage to be run, '
+    parser.add_argument('analysis_level',
+                        help='Processing stage to be run, '
                         'only "participant" in the case of the Cerebellar '
                         ' Volume Extraction Tool (see BIDS-Apps specification). ',
                         choices=['participant'])
@@ -45,10 +46,10 @@ if __name__ == "__main__":
                         choices=[0, 1],
                         default=0,
                         type=int)
-    parser.add.argument('--makelocalcopy',
-                        help='Copy the already processed freesurfer data '
-                        '(see "--freesurfer") inside the container',
-                        choises=[0, 1],
+    parser.add_argument('--makelocalcopy',
+                        help='Copy the already processed FreeSurfer data '
+                        '(see "--freesurfer") inside the container.',
+                        choices=[0, 1],
                         default=0,
                         type=int)
     parser.add_argument('--segment',
@@ -78,10 +79,10 @@ if __name__ == "__main__":
                         type=int)
     parser.add_argument('--report',
                         help='Generate a report for quality control of the data processing')
-    parser.add.argument('--biasfieldcorrection',
+    parser.add_argument('--biasfieldcorrection',
                         help='Perform N4 non-uniformity correction of the T1 image '
                         'as an initial procesing step.',
-                        choises=[0, 1],
+                        choices=[0, 1],
                         default=0,
                         type=int)
 
