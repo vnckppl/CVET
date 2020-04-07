@@ -56,7 +56,7 @@ mkdir -p ${oDIR}
 # If FreeSurfer data was already processed and
 # the user requests to copy this data to inside the
 # container, do that here.
-if [ ${LOCALCOPY=1} ]; then
+if [ ${LOCALCOPY} -eq 1 ]; then
 
     # ** Announce
     cat <<-EOF
@@ -70,7 +70,7 @@ EOF
 
     # ** Grab subject folders
     subFolders=(
-        $(find /data/in \
+        $(find /freesurfer \
                -maxdepth 1 \
                -type d \
                -iname "sub-${SID}*"
@@ -114,7 +114,7 @@ EOF
 
     # ** Session list
     sessions=(
-        $(find {iDIR} \
+        $(find ${iDIR} \
                -maxdepth 1 \
                -type d \
                -iname "ses-*"
@@ -128,10 +128,10 @@ EOF
         SES=$(basename ${session})
 
         # *** Announce
-        echo "Bias Field Correction of Subject ${SID}, Session ${SES}'"
+        echo "Bias Field Correction of T1 data of Subject ${SID}, Session ${SES}'"
 
         # *** Output folder
-        n4oDIR=${nDIR}/${SID}/${SES}/anat
+        n4oDIR=${nDIR}/sub-${SID}/${SES}/anat
         mkdir -p ${n4oDIR}
 
         # *** List all T1 images
@@ -142,7 +142,7 @@ EOF
                    -iname "sub-${SID}_${SES}*T1w.nii*"
             )
         )
-        
+
         # *** Create brain mask
         # Loop over T1 images 
         for T1 in ${T1list[@]}; do
@@ -155,10 +155,10 @@ EOF
             # scheme, because we use that for globbing
             # later, and we don't want to mess that up.
             naming=$(echo ${T1img} \
-                          sed \
-                          -e "s#sub-${SID}_${SES}_##g" \
-                          -e "s#.nii.gz##g" \
-                          -e "s#.nii##g"
+                         | sed \
+                               -e "s#sub-${SID}_${SES}_##g" \
+                               -e "s#.nii.gz##g" \
+                               -e "s#.nii##g"
                   )
 
             # **** Create coarse brain mask
@@ -168,17 +168,19 @@ EOF
             # very precise.
             # Calculate affine registration from MNI to subject
             flirt \
-                -i ${FSLDIR}/data/standard/MNI152_T1_1mm.nii.gz \
-                -r ${iDIR}/${SES}/anat/${T1img} \
-                -omat ${n4oDIR}/affine_${naming}.mat
+                -in /software/FSL-templates/MNI152_T1_1mm.nii.gz \
+                -ref ${iDIR}/${SES}/anat/${T1img} \
+                -omat ${n4oDIR}/affine_${naming}.mat \
+                -v
             # Apply regsitration to MNI brain mask
             flirt \
-                -i ${FSLDIR}/data/standard/MNI152_T1_1mm_brain_mask.nii.gz \
-                -r ${iDIR}/${SES}/anat/${T1img} \
+                -in /software/FSL-templates/MNI152_T1_1mm_brain_mask.nii.gz \
+                -ref ${iDIR}/${SES}/anat/${T1img} \
                 -applyxfm -init ${n4oDIR}/affine_${naming}.mat \
                 -interp nearestneighbour \
-                -o ${n4oDIR}/mask_${naming}.nii.gz
-                
+                -o ${n4oDIR}/mask_${naming}.nii.gz \
+                -v
+
 
             # **** Run N4 biasfield correction
             # Run B4 correction with the biasfield estimated
@@ -187,11 +189,11 @@ EOF
                 -d 3 \
                 -i ${iDIR}/${SES}/anat/${T1img} \
                 -w ${n4oDIR}/mask_${naming}.nii.gz \
-                -o [ ${n4oDIR}/sub-${SID}_${SES}_N4_${naming}.nii.gz , \
-                     ${n4oDIR}/BF_${naming}.nii.gz ] \
+                -o [${n4oDIR}/sub-${SID}_${SES}_N4_${naming}.nii.gz,${n4oDIR}/BF_${naming}.nii.gz] \
                 -s 2 \
-                -c 100x75x50
-                
+                -c 100x75x50 \
+                --verbose 1
+
         done
 
     done

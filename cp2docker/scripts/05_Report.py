@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 # * Libraries
-import sys
 import argparse
 import os
 import datetime
@@ -12,7 +11,6 @@ import nibabel as nb
 import nilearn
 from nilearn import plotting
 import svgutils.compose as sc
-import numpy as np
 import re
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -357,6 +355,14 @@ for SES in SESLIST:
             output_file=oDIRc + '/T1_' + plane + '.svg'
         )
 
+        # *** FreeSurfer Cerebellum Mask
+        print('--------------------------------------- FreeSurfer Cerebellum Mask outline')
+        CMask = nb.load(oDIRc + '/cMask.nii.gz')
+        display = plotting.plot_anat(T1, display_mode=plane.lower(), dim=-1)
+        display.add_contours(CMask, levels=[0.5], colors='r')
+        output_file = oDIRc + '/Mask_' + plane + '.svg'
+        display.savefig(output_file)
+
         # *** Gray matter map
         print('--------------------------------------- Gray Matter map')
         GMimg = nb.load(oDIRc + '/gm.nii.gz')
@@ -394,6 +400,7 @@ for SES in SESLIST:
                 display_mode=plane.lower(),
                 cut_coords=eval('cutpoints_' + plane + '_mm'),
                 alpha=alpha,
+                dim=-1,
                 output_file=oDIRc + '/SUIT_atlas_' + plane + '_' + str(alpha) + '.svg',
             )
 
@@ -419,7 +426,18 @@ for SES in SESLIST:
     html = html + f"""
     </div>
     """
-
+    # ** Add Screenshots to HTML: FreeSurfer Cerebellum mask
+    html = html + f"""
+    <h2>Cerebellum mask</h2>
+    <div class="imgbox">
+    """
+    for plane in ['X', 'Y', 'Z']:
+        html = html + f"""
+        <img class="img" src="./ses-{SES}/Mask_{plane}.svg">
+        """
+    html = html + f"""
+    </div>
+    """
     # ** Add Screenshots to HTML: GM overlay images
     html = html + f"""
     <h2>GM overlay</h2>
@@ -432,7 +450,6 @@ for SES in SESLIST:
     html = html + f"""
     </div>
     """
-
     # ** Add Screenshots to HTML: SUIT atlas overlay images
     html = html + f"""
     <h2>SUIT atlas parcellation</h2>

@@ -58,9 +58,9 @@ mkdir -p ${oDIR}
 
 # * Set FreeSurfer data location
 if [ ${FSDATA} -eq 0 ]; then
-    if [ ${LOCALCOPY=1} ]; then
+    if [ ${LOCALCOPY} -eq 1 ]; then
         FSDATADIR=/data/tmp/01_FreeSurfer
-    elif [ ${LOCALCOPY=0} ]; then
+    elif [ ${LOCALCOPY} -eq 0 ]; then
         FSDATADIR=/freesurfer
     fi
 elif [ ${FSDATA} -eq 1 ]; then
