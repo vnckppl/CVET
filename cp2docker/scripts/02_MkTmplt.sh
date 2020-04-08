@@ -5,29 +5,32 @@
 # calcualtes the warp from this template to SUIT space.
 
 # * Input arguments
-while getopts "s:n:f:c:i:l:r:" OPTION
+while getopts "s:n:f:u:c:i:l:r:" OPTION
 do
      case $OPTION in
          s)
-             SID=$OPTARG
+             SID=${OPTARG}
              ;;
          n)
-             SESN=$OPTARG
+             SESN=${OPTARG}
              ;;
          f)
-             FSDATA=$OPTARG
+             FSDATA=${OPTARG}
+             ;;
+         u)
+             USESUIT=${OPTARG}
              ;;
          c)
-             CPUS=$OPTARG
+             CPUS=${OPTARG}
              ;;
          i)
-             INTERMEDIATE=$OPTARG
+             INTERMEDIATE=${OPTARG}
              ;;
          l)
              LOCALCOPY=${OPTARG}
              ;;
          r)
-             REPORT=$OPTARG
+             REPORT=${OPTARG}
              ;;
          ?)
              exit
@@ -72,8 +75,7 @@ fi
 # * Create a cerebellar mask from FreeSurfer's labels.
 cat <<EOF
 ##############################################################
-### Create a cerebellar mask from the 4 FreeSurfer         ###
-### cerebellar labels (L+R * GM+WM labels)                 ###
+### Create a cerebellar mask                               ###
 ##############################################################
 
 EOF
@@ -123,38 +125,206 @@ for SES in ${SESLIST[@]}; do
         ${FSDIR}/mri/T1.mgz \
         ${oDIRm}/T1.nii.gz
 
-    # ** Create cerebellum + brain stem  mask from FreeSurfer labels
-    ROIn=(7 8 46 47 16)                              # Lables numbers
-    ROIl=("LcWM" "LcGM" "RcWM" "RcGM" "BrainStem")   # Labels
-    ROIi=( $(seq -w 0 $(( ${#ROIn[@]} - 1 )) ) )     # Index list
-    for R in ${ROIi[@]}; do
+    # ** Create cerebellum mask
+    if [ ${USESUIT} -eq 0 ]; then
+
+        # *** Create FreeSurfer cerebellum mask
+        cat <<-EOF
+	##############################################################
+	### Create a cerebellar mask from the 4 FreeSurfer         ###
+	### cerebellar labels (L+R * GM+WM labels)                 ###
+	##############################################################
+
+EOF
+        # Create cerebellum + brain stem  mask from FreeSurfer labels
+        ROIn=(7 8 46 47 16)                              # Lables numbers
+        ROIl=("LcWM" "LcGM" "RcWM" "RcGM" "BrainStem")   # Labels
+        ROIi=( $(seq -w 0 $(( ${#ROIn[@]} - 1 )) ) )     # Index list
+        for R in ${ROIi[@]}; do
+
+            fslmaths \
+                ${oDIRm}/aseg.nii.gz \
+                -thr ${ROIn[${R}]} \
+                -uthr ${ROIn[${R}]} \
+                ${oDIRm}/${ROIl[${R}]}.nii.gz
+
+        done
+
+        # *** Mask with Brain Stem (for normalization)
+        fslmaths \
+            ${oDIRm}/LcWM.nii.gz \
+            -add ${oDIRm}/LcGM.nii.gz \
+            -add ${oDIRm}/RcWM.nii.gz \
+            -add ${oDIRm}/RcGM.nii.gz \
+            -add ${oDIRm}/BrainStem.nii.gz \
+            -bin \
+            ${oDIRm}/cerebellumMask.nii.gz
+
+        # *** Mask without Brain Stem (for volume extraction)
+        fslmaths \
+            ${oDIRm}/LcWM.nii.gz \
+            -add ${oDIRm}/LcGM.nii.gz \
+            -add ${oDIRm}/RcWM.nii.gz \
+            -add ${oDIRm}/RcGM.nii.gz \
+            -bin \
+            ${oDIRm}/cerebellumMask_noBS.nii.gz
+
+    elif [ ${USESUIT} -eq 1 ]; then
+
+        # *** Create SUIT cerebellum mask
+        cat <<-EOF
+	##############################################################
+	### Create a cerebellar mask using SUIT isolate            ###
+	##############################################################
+
+EOF
+        # *** Reorient image to LPI
+        # Required for SUIT isolation
+        fslreorient2std \
+            ${oDIRm}/T1.nii.gz \
+            ${oDIRm}/roT1.nii.gz
+        
+        # *** Unzip T1 image
+        gunzip -v ${oDIRm}/roT1.nii.gz
+
+        # *** Create matlab batch file
+        cat <<-EOF> ${oDIRm}/isolate_job.m
+	%-----------------------------------------------------------------------
+	% SUIT Cerebellum Isolation Batch
+	% This script was automatically generated on `date` 
+	%-----------------------------------------------------------------------
+	matlabbatch{1}.spm.tools.suit.isolate_seg.source = {{'${oDIRm}/roT1.nii,1'}};
+	matlabbatch{1}.spm.tools.suit.isolate_seg.bb = [-76 76
+	                                                -108 -6
+	                                                -70 11];
+	matlabbatch{1}.spm.tools.suit.isolate_seg.maskp = 0.2;
+	matlabbatch{1}.spm.tools.suit.isolate_seg.keeptempfiles = 0;
+EOF
+
+        # *** If you are NOT root, set your home folder
+        # If you run the container as user, then HOME is set to '/'.
+        # This results in a permission error from the spm binary.
+        # Create a HOME folder and set the environment.
+        if [ ! "$(whoami)" = "root" ]; then
+            
+            # Export and create home folder 
+            echo "CVET running as user: set 'HOME' environment for homeless user"
+            export HOME=/software/myHome
+            mkdir -p ${HOME}
+            
+        fi
+
+        # *** Run segmentation job
+        /software/SPM/run_spm12.sh \
+            /software/MCR/v94 \
+            batch ${oDIRm}/isolate_job.m
+
+        # *** Zip nifti files
+        cd ${oDIR}
+        find . -iname "*.nii" | xargs -I {} gzip -9 {}
+        
+        # *** Mask with Brain Stem (for normalization)
+        # Put the SUIT mask back in the FreeSurfer orientation and dimensions
+        mri_convert \
+            ${oDIRm}/c_roT1_pcereb.nii.gz \
+            -rl ${oDIRm}/T1.nii.gz \
+            -rt nearest \
+            -odt short \
+            ${oDIRm}/cerebellumMask.nii.gz
 
         fslmaths \
+            ${oDIRm}/cerebellumMask.nii.gz \
+            -bin \
+            ${oDIRm}/cerebellumMask.nii.gz
+
+        # *** Threshold and binarize white matter segmentation
+        fslmaths \
+            ${oDIRm}/roT1_seg2.nii.gz \
+            -thr 0.95 \
+            -bin \
+            ${oDIRm}/cerebellum_WM.nii.gz
+        
+        # *** Move white matter mask into FreeSurfer space
+        mri_convert \
+            ${oDIRm}/cerebellum_WM.nii.gz \
+            -rl ${oDIRm}/T1.nii.gz \
+            -odt short \
+            ${oDIRm}/cerebellum_WM.nii.gz
+
+        fslmaths \
+            ${oDIRm}/cerebellum_WM.nii.gz \
+            -bin \
+            ${oDIRm}/cerebellum_WM.nii.gz
+
+
+
+
+
+        # *** Mask out FreeSurfer non cerebellar regions
+        # Basically everything /but/ the cerebellum, and also
+        # not values of 0, because the cerebellum mask would be
+        # to narrow.
+
+        # *** Extract cerebellum mask from FreeSurfer
+        ROIn=(7 8 46 47)                              # Lables numbers
+        ROIl=("LcWM" "LcGM" "RcWM" "RcGM")            # Labels
+        ROIi=( $(seq -w 0 $(( ${#ROIn[@]} - 1 )) ) )  # Index list
+        for R in ${ROIi[@]}; do
+
+            fslmaths \
+                ${oDIRm}/aseg.nii.gz \
+                -thr ${ROIn[${R}]} \
+                -uthr ${ROIn[${R}]} \
+                ${oDIRm}/${ROIl[${R}]}.nii.gz
+
+        done
+
+        # *** Extract non brain tissue from freesurfer
+        fslmaths \
             ${oDIRm}/aseg.nii.gz \
-            -thr ${ROIn[${R}]} \
-            -uthr ${ROIn[${R}]} \
-            ${oDIRm}/${ROIl[${R}]}.nii.gz
+            -add 1 \
+            -thr 1 \
+            -uthr 1 \
+            ${oDIRm}/nonBrain.nii.gz
+        
+        # *** Combined mask
+        fslmaths \
+            ${oDIRm}/LcWM.nii.gz \
+            -add ${oDIRm}/RcWM.nii.gz \
+            -add ${oDIRm}/LcGM.nii.gz \
+            -add ${oDIRm}/RcGM.nii.gz \
+            -add ${oDIRm}/nonBrain.nii.gz \
+            -bin \
+            ${oDIRm}/fs_probably_cereb.nii.gz
+            
+        # Subtract FreeSurfer 'probably' cerebellum maks
+        # and SUIT white matter mask from the SUIT
+        # cerebellum+brainstem mask
+        fslmaths \
+            ${oDIRm}/cerebellumMask.nii.gz \
+            -mas ${oDIRm}/fs_probably_cereb.nii.gz \
+            -thr 1 \
+            -bin \
+            -sub ${oDIRm}/cerebellum_WM.nii.gz \
+            -thr 1 \
+            -bin \
+            ${oDIRm}/cerebellumMask_noBS.nii.gz
 
-    done
+        # *** Grab largest cluster
+        cluster \
+            -i ${oDIRm}/cerebellumMask_noBS.nii.gz \
+            -t 1 \
+            --connectivity=6 \
+            --osize=${oDIRm}/clusters.nii.gz
 
-    # ** Mask with Brain Stem (for normalization)
-    fslmaths \
-        ${oDIRm}/LcWM.nii.gz \
-        -add ${oDIRm}/LcGM.nii.gz \
-        -add ${oDIRm}/RcWM.nii.gz \
-        -add ${oDIRm}/RcGM.nii.gz \
-        -add ${oDIRm}/BrainStem.nii.gz \
-        -bin \
-        ${oDIRm}/cerebellumMask.nii.gz
+        ### *** threshold
+        fslmaths \
+            ${odir}/clusters.nii.gz \
+            -thr $(fslstats ${oDIRm}/clusters.nii.gz -R | awk '{ print $2 }') \
+            -bin \
+            ${oDIRm}/cerebellumMask_noBS.nii.gz
 
-    # ** Mask without Brain Stem (for volume extraction)
-    fslmaths \
-        ${oDIRm}/LcWM.nii.gz \
-        -add ${oDIRm}/LcGM.nii.gz \
-        -add ${oDIRm}/RcWM.nii.gz \
-        -add ${oDIRm}/RcGM.nii.gz \
-        -bin \
-        ${oDIRm}/cerebellumMask_noBS.nii.gz
+    fi
     
     # ** Apply mask
     fslmaths \

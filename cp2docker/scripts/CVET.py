@@ -57,6 +57,12 @@ if __name__ == "__main__":
                         "ANTs Atropos (default), or SPM12.",
                         choices=['A', 'S'],
                         default='A')
+    parser.add_argument('--suitmask',
+                        help="Use SUIT instead of FreeSurfer (default) to create the "
+                        "cerebellum mask.",
+                        choices=[0, 1],
+                        default=0,
+                        type=int)
     parser.add_argument('--average',
                         help='Select 1 to create an average from multiple T1-weighted '
                         'images if more than one T1-weighted image was '
