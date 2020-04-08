@@ -193,7 +193,7 @@ EOF
     # *** Create matlab batch file
     cat <<-EOF> ${oDIR}/segment_job.m
 	%-----------------------------------------------------------------------
-	% SUIT Cerebellum Isolation Batch
+	% SPM Segmentation Batch
 	% This script was automatically generated on `date` 
 	%-----------------------------------------------------------------------
 	matlabbatch{1}.spm.spatial.preproc.channel.vols = {'${oDIR}/sub-${SID}_ses-${SES}_rawavg_N4.nii,1'};
