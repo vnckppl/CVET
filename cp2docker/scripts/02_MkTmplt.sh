@@ -319,7 +319,7 @@ EOF
 
         ### *** threshold
         fslmaths \
-            ${odir}/clusters.nii.gz \
+            ${oDIRm}/clusters.nii.gz \
             -thr $(fslstats ${oDIRm}/clusters.nii.gz -R | awk '{ print $2 }') \
             -bin \
             ${oDIRm}/cerebellumMask_noBS.nii.gz

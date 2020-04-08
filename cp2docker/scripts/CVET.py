@@ -229,6 +229,7 @@ if __name__ == "__main__":
             '-s', SID,
             '-n', str(SESN),
             '-f', str(FSOPT),
+            '-u', str(args.suitmask),
             '-c', str(args.n_cpus),
             '-i', str(args.intermediate_files),
             '-l', str(args.makelocalcopy)
