@@ -108,17 +108,17 @@ def compileSVG(DIR, svg1, svg2, outSVG):
         # *** Add closing svg tag
         myStringLines = myStringLines + '</svg>'
 
-    # ** Fix image width
-    # For these compiled images, extra whitespace is added
-    # because there are lines that reference columns outside
-    # the original image. Filter these lines out here.
-    #  Strings to List
-    myListLines = myStringLines.split('\n')
-    #  Remove lines where x (width) references
-    # x > image width
-    myListLines = [i for i in myListLines if '<use x="' not in i or float(i.split('"')[1]) < float(width.replace("pt", ""))]
-    # Convert list back to string
-    myStringLines = '\n'.join(myListLines)
+    # # ** Fix image width
+    # # For these compiled images, extra whitespace is added
+    # # because there are lines that reference columns outside
+    # # the original image. Filter these lines out here.
+    # #  Strings to List
+    # myListLines = myStringLines.split('\n')
+    # #  Remove lines where x (width) references
+    # # x > image width
+    # myListLines = [i for i in myListLines if '<use x="' not in i or float(i.split('"')[1]) < float(width.replace("pt", ""))]
+    # # Convert list back to string
+    # myStringLines = '\n'.join(myListLines)
 
     # ** Save to file
     tmpSVG = DIR + '/tmp.svg'
