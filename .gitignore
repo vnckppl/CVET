@@ -1,9 +1,7 @@
 .gitignore
 .DS_Store
-isolateTest.sh
-makeStandaloneSUIT_Cluster_CHPC.sh
-runDocker_test.sh
 /OLD/
+/Other/
 /cp2docker/SPM/
 /cp2docker/ANTS-templates/
 /cp2docker/SPM-templates/
