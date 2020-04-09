@@ -69,7 +69,7 @@ def compileSVG(DIR, svg1, svg2, outSVG):
         regex = re.compile('height')
         height = [string for string in myParameters if re.match(regex, string)]
         height = str(height).split('"')[1]
-        # *** Weight
+        # *** Width
         regex = re.compile('width')
         width = [string for string in myParameters if re.match(regex, string)]
         width = str(width).split('"')[1]
@@ -107,6 +107,18 @@ def compileSVG(DIR, svg1, svg2, outSVG):
 
         # *** Add closing svg tag
         myStringLines = myStringLines + '</svg>'
+
+    # ** Fix image width
+    # For these compiled images, extra whitespace is added
+    # because there are lines that reference columns outside
+    # the original image. Filter these lines out here.
+    #  Strings to List
+    myListLines = myStringLines.split('\n')
+    #  Remove lines where x (width) references
+    # x > image width
+    myListLines = [i for i in myListLines if '<use x="' not in i or float(i.split('"')[1]) < float(width.replace("pt", ""))]
+    # Convert list back to string
+    myStringLines = '\n'.join(myListLines)
 
     # ** Save to file
     tmpSVG = DIR + '/tmp.svg'
@@ -253,6 +265,30 @@ for SES in SESLIST:
 
         results = myObject.run()
 
+    # ** Create 4D file from the atlas image for outline display
+    # Split atlas image
+    for i in range(1, 29):
+        izp = str(i).zfill(2)
+        myObject = fsl.ImageMaths(
+            in_file=oDIRc + "/atlas.nii.gz",
+            op_string=f''' -thr {i} -uthr {i} ''',
+            out_file=oDIRc + '/lobule_' + izp + '.nii.gz'
+        )
+        results = myObject.run()
+    # Merge atlas images
+    lobule_files = sorted(glob(oDIRc + '/lobule*.nii.gz'))
+    myObject = fsl.Merge()
+    myObject.inputs.in_files = lobule_files
+    myObject.inputs.dimension = 't'
+    myObject.inputs.output_type = 'NIFTI_GZ'
+    myObject.inputs.merged_file = (oDIRc + '/atlas_4D.nii.gz')
+    results = myObject.run()
+    # Remove intermediate files
+    for i in range(1, 29):
+        izp = str(i).zfill(2)
+        file = oDIRc + '/lobule_' + izp + '.nii.gz'
+        os.remove(file)
+
 
 # * Create overview of GM map for each subject/session
 message = f"""
@@ -294,7 +330,7 @@ html = f"""
       .imgbox {{
           resize: both;
           overflow: auto;
-          margin-bottom: -20px;
+          <!-- margin-bottom: -20px; -->
       }}
     </style>
     <title>CVET {SID}</title>
@@ -347,11 +383,12 @@ for SES in SESLIST:
 
         # *** T1 image
         print('--------------------------------------- T1 image')
-        nilearn.plotting.plot_img(
+        nilearn.plotting.plot_anat(
             T1,
             display_mode=plane.lower(),
             cut_coords=eval('cutpoints_' + plane + '_mm'),
             cmap='gray',
+            dim=-1,
             output_file=oDIRc + '/T1_' + plane + '.svg'
         )
 
@@ -389,8 +426,8 @@ for SES in SESLIST:
         os.remove(svg1)
         os.remove(svg2)
 
-        # *** SUIT altas
-        print('--------------------------------------- SUIT Atlas')
+        # *** SUIT atlas Animation
+        print('--------------------------------------- SUIT Atlas (animation)')
         atlas = nb.load(oDIRc + '/atlas.nii.gz')
 
         for alpha in [0.0, 1.0]:
@@ -404,7 +441,7 @@ for SES in SESLIST:
                 output_file=oDIRc + '/SUIT_atlas_' + plane + '_' + str(alpha) + '.svg',
             )
 
-        # *** Create GM animation
+        # *** Create SUIT animation
         svg1 = oDIRc + '/SUIT_atlas_' + plane + '_0.0.svg'
         svg2 = oDIRc + '/SUIT_atlas_' + plane + '_1.0.svg'
         outSVG = oDIRc + '/SUIT_atlas_' + plane + '.svg'
@@ -413,6 +450,13 @@ for SES in SESLIST:
         # *** Clean up
         os.remove(svg1)
         os.remove(svg2)
+
+        # *** SUIT atlas static contours
+        print('--------------------------------------- SUIT Atlas (contours)')
+        atlas = nb.load(oDIRc + '/atlas_4D.nii.gz')
+        display = plotting.plot_prob_atlas(atlas, bg_img=T1, dim=-1, linewidths=0.5, alpha=1, display_mode=plane.lower(),)
+        output_file = oDIRc + '/SUIT_contour_' + plane + '.svg'
+        display.savefig(output_file)
 
     # ** Add Screenshots to HTML: T1 images
     html = html + f"""
@@ -450,7 +494,7 @@ for SES in SESLIST:
     html = html + f"""
     </div>
     """
-    # ** Add Screenshots to HTML: SUIT atlas overlay images
+    # ** Add Screenshots to HTML: SUIT atlas overlay images - Animation
     html = html + f"""
     <h2>SUIT atlas parcellation</h2>
     <div class="imgbox">
@@ -458,6 +502,17 @@ for SES in SESLIST:
     for plane in ['X', 'Y', 'Z']:
         html = html + f"""
         <img class="img" src="./ses-{SES}/SUIT_atlas_{plane}.svg">
+        """
+    html = html + f"""
+    </div>
+    """
+    # ** Add Screenshots to HTML: SUIT atlas overlay images - Contour
+    html = html + f"""
+    <div class="imgbox">
+    """
+    for plane in ['X', 'Y', 'Z']:
+        html = html + f"""
+        <img class="img" src="./ses-{SES}/SUIT_contour_{plane}.svg">
         """
     html = html + f"""
     </div>
