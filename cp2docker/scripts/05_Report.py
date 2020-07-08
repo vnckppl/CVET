@@ -14,6 +14,7 @@ import svgutils.compose as sc
 import re
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 
 
 # * Input arguments
@@ -262,8 +263,25 @@ for SES in SESLIST:
         myObject.inputs.in_file = Ifiles[file]
         myObject.inputs.out_file = Ofiles[file]
         myObject.inputs.reslice_like = oDIRc + '/ccMask_dilM2.nii.gz'
-
         results = myObject.run()
+
+    # Mask the atlas file with the binarized GM image and visa versa
+    # Load data
+    gm_image = nb.load(oDIRc + '/gm.nii.gz')
+    gm_data = gm_image.get_fdata()
+    atlas_image = nb.load(oDIRc + '/atlas.nii.gz')
+    atlas_data = atlas_image.get_fdata()
+    # Binarize
+    gm_data_bin = (gm_data > 0).astype(np.int_)
+    atlas_data_bin = (atlas_data > 0).astype(np.int_)
+    # Mask
+    gm_masked = np.multiply(gm_data, atlas_data_bin)
+    atlas_masked = np.multiply(atlas_data, gm_data_bin)
+    # Save
+    gm_array = nb.Nifti1Image(gm_masked, gm_image.affine)
+    nb.save(gm_array, oDIRc + '/gm.nii.gz')
+    atlas_array = nb.Nifti1Image(atlas_masked, atlas_image.affine)
+    nb.save(atlas_array, oDIRc + '/atlas.nii.gz')
 
     # ** Create 4D file from the atlas image for outline display
     # Split atlas image
@@ -359,6 +377,11 @@ for SES in SESLIST:
 
     # ** Get image dimensions of T1 image
     T1 = nb.load(oDIRc + '/T1.nii.gz')
+    # Contour fix
+    # remove the affine matrix because this currently results in
+    # errors with nilearn.
+    T1_noAffine = nb.load(oDIRc + '/T1.nii.gz')
+    T1_noAffine.set_sform(T1_noAffine.affine * np.identity(4))
 
     # ** Calculate the cut points for the screenshots
     cut_distance_X = T1.shape[0] / (nX + 1)
@@ -454,7 +477,8 @@ for SES in SESLIST:
         # *** SUIT atlas static contours
         print('--------------------------------------- SUIT Atlas (contours)')
         atlas = nb.load(oDIRc + '/atlas_4D.nii.gz')
-        display = plotting.plot_prob_atlas(atlas, bg_img=T1, dim=-1, linewidths=0.5, alpha=1, display_mode=plane.lower(),)
+        atlas.set_sform(atlas.affine * np.identity(4))
+        display = plotting.plot_prob_atlas(atlas, bg_img=T1_noAffine, dim=-1, linewidths=0.5, alpha=1, display_mode=plane.lower(),)
         output_file = oDIRc + '/SUIT_contour_' + plane + '.svg'
         display.savefig(output_file)
 
