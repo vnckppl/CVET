@@ -2,7 +2,7 @@
 .DS_Store
 /OLD/
 /Other/
-# /cp2docker/SPM/
+/cp2docker/SPM/spm12.ctf
 # /cp2docker/ANTS-templates/
 # /cp2docker/SPM-templates/
 # /cp2docker/SUIT-templates/
