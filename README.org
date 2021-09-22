@@ -1,2 +1,15 @@
 *Cerebellar Volume Extraction Tool*
+
 This repository contains all images and the Docker recipe to build the BIDS compliant Cerebellar Volume Extraction Tool (CVET) Docker image.
+
+* Output
+CVET takes in T1-weighted imaging data and returns a spreadsheet of cerebellar volumes for each lobule according to the [[http://www.diedrichsenlab.org/imaging/suit.htm][SUIT]] atlas ([[http://dx.doi.org/10.1016/j.neuroimage.2009.01.045][Diedrichsen et al., 2009]]), a gray matter map of the cerebellum in MNI space for subsequent voxel-wise analysis, and a processing report for quality control purposes.
+
+* Pipeline
+CVET pipeline applies [[https://surfer.nmr.mgh.harvard.edu/][FreeSurfer]] 6.0.0 ([[http://dx.doi.org/10.1093/cercor/bhg087][Fischl, 2004]]) to create an initial cerebellum mask and to obtain the estimated total intracranial volume (eTIV). Subsequently, it uses advanced normalization tools ([[https://github.com/ANTsX][ANTs]]) N4 bias field correction ([[http://dx.doi.org/10.1109/tmi.2010.2046908][Tustison et al., 2010]]) to adjust the T1 for MR field inhomogeneity. In a next step gray matter volume maps are obtained using statistical parametric mapping ([[https://www.fil.ion.ucl.ac.uk/spm/software/spm12/][SPM12]]; [[http://dx.doi.org/10.1016/j.neuroimage.2011.10.025][Ashburner, 2012]]). ANTs with symmetric normalization (SyN) as the transformation algorithm ([[http://dx.doi.org/10.1016/j.neuroimage.2010.09.025][Avants et al., 2011]]) is then used to bring a spatially unbiased infratentorial template (SUIT) into the native image space of the subject. This SUIT template corresponds to a SUIT atlas of 28 cerebellar hemispheric and vermis regions that are then used to extract the gray matter volume from the gray matter map that was created in a previous step.
+
+* Longitudinal processing
+When longitudinal data is detected, a longitudinal pipeline is being run that applies longitudinal FreeSurfer after which it uses the output of this pipeline to generate a subject specific cerebellar template using ANTs' /antsMultivariateTemplateConstruction2.sh/ script. This unbiased subject template is than used as an intermediate space to move the cerebellar gray matter maps of each time point for a given subject into SUIT template space, and to bring the SUIT atlas to the gray matter maps for each time point. 
+
+* Report example
+
