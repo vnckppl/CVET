@@ -1,0 +1,2 @@
+*Cerebellar Volume Extraction Tool*
+This repository contains all images and the Docker recipe to build the BIDS compliant Cerebellar Volume Extraction Tool (CVET) Docker image.
